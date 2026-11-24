@@ -1,0 +1,2172 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LTI DECivil (IST) - Plataforma Oficial de Estudo</title>
+    <!-- Carregamento do Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carregamento da fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F4F7FA;
+            color: #0f172a;
+        }
+
+        /* Estilos para o efeito 3D de virar o cartão (Flip Card) */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        /* Scrollbar discreta para navegação horizontal em mobile */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Cabeçalho Institucional IST (#003B73 & #009DE0) -->
+    <header class="bg-[#003B73] text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col gap-3">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-[#009DE0] flex items-center justify-center font-extrabold text-base tracking-tight shadow-inner shrink-0">
+                        LTI
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight">LTI DECivil · Avaliação de Monitores</h1>
+                        <p class="text-xs text-sky-200">Instituto Superior Técnico · Manual do Formando (1ª Parte) & Formação 26/27</p>
+                    </div>
+                </div>
+
+                <!-- Controlos de Persistência e Estado de Gravação -->
+                <div class="flex flex-wrap items-center gap-2 self-start sm:self-center">
+                    <span id="save-status-pill" class="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white/10 text-sky-100 border border-white/15 flex items-center gap-1.5">
+                        <span id="save-status-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span id="save-status-text">Guardado</span>
+                    </span>
+
+                    <button onclick="exportProgress()" title="Exportar progresso para ficheiro JSON"
+                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white border border-white/15 text-[11px] font-semibold transition">
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-sky-300"></i>
+                        <span>Exportar (.json)</span>
+                    </button>
+
+                    <button onclick="triggerImport()" title="Importar progresso de um ficheiro JSON"
+                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white border border-white/15 text-[11px] font-semibold transition">
+                        <i data-lucide="upload" class="w-3.5 h-3.5 text-sky-300"></i>
+                        <span>Importar (.json)</span>
+                    </button>
+                    <input type="file" id="import-file-input" accept=".json,application/json" class="hidden" onchange="importProgress(event)">
+
+                    <button onclick="openResetModal()" title="Limpar todo o progresso guardado"
+                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/35 active:scale-95 text-rose-100 border border-rose-400/30 text-[11px] font-semibold transition">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-300"></i>
+                        <span>Limpar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navegação por 6 Abas -->
+            <nav class="flex bg-[#00284D] p-1 rounded-xl overflow-x-auto no-scrollbar gap-1" role="tablist">
+                <button id="tab-flashcards" onclick="switchMode('flashcards')" role="tab" aria-selected="true"
+                    class="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-[#009DE0] text-white shadow-sm whitespace-nowrap shrink-0">
+                    <i data-lucide="layers" class="w-4 h-4"></i>
+                    <span>Flashcards (21)</span>
+                </button>
+                <button id="tab-quiz" onclick="switchMode('quiz')" role="tab" aria-selected="false"
+                    class="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-sky-100/80 hover:text-white whitespace-nowrap shrink-0">
+                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    <span>Questionário (13)</span>
+                </button>
+                <button id="tab-simulator" onclick="switchMode('simulator')" role="tab" aria-selected="false"
+                    class="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-sky-100/80 hover:text-white whitespace-nowrap shrink-0">
+                    <i data-lucide="headset" class="w-4 h-4"></i>
+                    <span>Simulador de Turno</span>
+                </button>
+                <button id="tab-checklist" onclick="switchMode('checklist')" role="tab" aria-selected="false"
+                    class="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-sky-100/80 hover:text-white whitespace-nowrap shrink-0">
+                    <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+                    <span>Checklist de Bolso</span>
+                </button>
+                <button id="tab-ri-faturacao" onclick="switchMode('ri-faturacao')" role="tab" aria-selected="false"
+                    class="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-sky-100/80 hover:text-white whitespace-nowrap shrink-0">
+                    <i data-lucide="receipt" class="w-4 h-4"></i>
+                    <span>RI vs. IST-ID & Faturação</span>
+                </button>
+                <button id="tab-traps" onclick="switchMode('traps')" role="tab" aria-selected="false"
+                    class="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-sky-100/80 hover:text-white whitespace-nowrap shrink-0">
+                    <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                    <span>Exceções e Armadilhas</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6">
+
+        <!-- ========================================================= -->
+        <!-- ABA 1: FLASHCARDS (BARALHO INTERATIVO)                    -->
+        <!-- ========================================================= -->
+        <section id="view-flashcards" class="flex flex-col gap-5">
+            
+            <!-- Progresso e Filtros -->
+            <div class="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-[#003B73]">Progresso de Memorização</span>
+                    <div class="flex items-center gap-4 text-xs font-medium">
+                        <span class="flex items-center gap-1.5 text-emerald-600">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Já sei: <strong id="stat-mastered">0</strong>
+                        </span>
+                        <span class="flex items-center gap-1.5 text-amber-600">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            Rever depois: <strong id="stat-review">0</strong>
+                        </span>
+                        <span class="text-slate-400">Total: <strong id="stat-total" class="text-slate-700">21</strong></span>
+                    </div>
+                </div>
+
+                <!-- Barra visual -->
+                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex">
+                    <div id="bar-mastered" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                    <div id="bar-review" class="bg-amber-400 h-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+
+                <!-- Filtros de Categoria -->
+                <div id="category-filters" class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+
+            <!-- Área do Cartão 3D -->
+            <div class="relative w-full">
+                <div class="flex items-center justify-between text-xs font-medium text-slate-500 mb-2 px-1">
+                    <span id="card-counter">Cartão 1 de 21</span>
+                    <span id="card-status-badge" class="px-2.5 py-0.5 rounded-full bg-slate-200/70 text-slate-600">Não avaliado</span>
+                </div>
+
+                <div onclick="flipCard()" class="perspective-1000 w-full h-80 sm:h-96 cursor-pointer select-none group">
+                    <div id="flashcard-inner" class="relative w-full h-full transform-style-3d">
+                        
+                        <!-- FRENTE -->
+                        <div class="absolute inset-0 backface-hidden bg-white border-2 border-slate-200 group-hover:border-[#009DE0] rounded-3xl p-6 sm:p-10 shadow-sm flex flex-col justify-between transition-colors">
+                            <div class="flex items-center justify-between">
+                                <span id="card-category-front" class="text-xs font-semibold px-3 py-1 rounded-full bg-sky-50 text-[#003B73] border border-sky-200">
+                                    Categoria
+                                </span>
+                                <span class="text-xs font-medium text-slate-400 flex items-center gap-1">
+                                    <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> Clica para virar
+                                </span>
+                            </div>
+
+                            <div class="my-auto text-center px-2">
+                                <p class="text-xs uppercase tracking-widest text-[#009DE0] font-bold mb-3">Pergunta / Conceito do Manual</p>
+                                <h2 id="card-front-text" class="text-lg sm:text-2xl font-bold text-slate-800 leading-snug">
+                                    Carregando...
+                                </h2>
+                            </div>
+
+                            <div class="text-center text-xs text-slate-400">
+                                Toca no cartão ou usa o botão abaixo para ver o procedimento oficial
+                            </div>
+                        </div>
+
+                        <!-- VERSO -->
+                        <div class="absolute inset-0 backface-hidden rotate-y-180 bg-[#003B73] text-white border-2 border-[#00284D] rounded-3xl p-6 sm:p-10 shadow-lg flex flex-col justify-between">
+                            <div class="flex items-center justify-between">
+                                <span id="card-category-back" class="text-xs font-semibold px-3 py-1 rounded-full bg-white/10 text-sky-200 border border-white/15">
+                                    Categoria
+                                </span>
+                                <span class="text-xs font-medium text-sky-200/70 flex items-center gap-1">
+                                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Resposta Oficial
+                                </span>
+                            </div>
+
+                            <div class="my-auto px-2 overflow-y-auto max-h-56">
+                                <p class="text-xs uppercase tracking-widest text-[#009DE0] font-bold mb-2 text-center">Procedimento LTI DECivil</p>
+                                <p id="card-back-text" class="text-sm sm:text-lg text-white leading-relaxed text-center font-medium">
+                                    Carregando...
+                                </p>
+                            </div>
+
+                            <div class="text-center text-xs text-sky-200/70">
+                                Marca abaixo se já dominas este ponto
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controlos -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm">
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                    <button onclick="prevCard()" class="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-95 transition font-medium text-sm">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        <span>Anterior</span>
+                    </button>
+
+                    <button onclick="flipCard()" class="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 active:scale-95 transition font-medium text-sm">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        <span>Virar</span>
+                    </button>
+
+                    <button onclick="nextCard()" class="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-95 transition font-medium text-sm">
+                        <span>Próximo</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button onclick="markCard('review')" class="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 active:scale-95 transition font-semibold text-sm">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                        <span>Rever depois</span>
+                    </button>
+
+                    <button onclick="markCard('mastered')" class="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition font-semibold text-sm shadow-sm">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Já sei</span>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- ABA 2: QUESTIONÁRIO (12 PERGUNTAS OFICIAIS)               -->
+        <!-- ========================================================= -->
+        <section id="view-quiz" class="hidden flex-col gap-5">
+            
+            <div id="quiz-active-container" class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col gap-6">
+                
+                <div class="flex flex-col gap-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
+                        <span id="quiz-progress-text" class="font-bold text-[#003B73]">Pergunta 1 de 13</span>
+                        <div class="flex items-center gap-2">
+                            <span id="quiz-best-badge" class="hidden px-3 py-1 rounded-full bg-amber-50 text-amber-800 font-bold text-xs border border-amber-200 flex items-center gap-1">
+                                <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-500"></i>
+                                <span>Melhor nota: <span id="quiz-best-score-val">0</span>/13</span>
+                            </span>
+                            <span class="px-3 py-1 rounded-full bg-sky-50 text-[#003B73] font-bold text-xs border border-sky-200">
+                                Pontuação: <span id="quiz-score-badge">0</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div id="quiz-progress-bar" class="bg-[#009DE0] h-full transition-all duration-300" style="width: 8%"></div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <span id="quiz-category" class="self-start text-xs font-bold uppercase tracking-wider text-[#009DE0]">
+                        Categoria
+                    </span>
+                    <h2 id="quiz-question-text" class="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
+                        Enunciado da pergunta...
+                    </h2>
+                </div>
+
+                <div id="quiz-options-list" class="flex flex-col gap-3">
+                    <!-- Opções via JS -->
+                </div>
+
+                <div id="quiz-feedback-box" class="hidden rounded-2xl p-4 border text-sm leading-relaxed">
+                    <div class="flex items-center gap-2 font-bold mb-1" id="quiz-feedback-title"></div>
+                    <p id="quiz-feedback-explanation" class="text-slate-700"></p>
+                </div>
+
+                <div class="flex justify-end pt-2 border-t border-slate-100">
+                    <button id="quiz-next-btn" onclick="nextQuizQuestion()" disabled
+                        class="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#003B73] text-white font-semibold text-sm shadow-sm hover:bg-[#00284D] disabled:opacity-40 disabled:pointer-events-none transition">
+                        <span id="quiz-next-btn-text">Próxima Pergunta</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ecrã de Resultados -->
+            <div id="quiz-results-container" class="hidden bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-10 shadow-sm flex flex-col items-center text-center gap-6">
+                <div class="w-16 h-16 rounded-2xl bg-sky-50 text-[#009DE0] border border-sky-200 flex items-center justify-center">
+                    <i data-lucide="award" class="w-9 h-9"></i>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">Simulação de Exame Concluída!</h2>
+                    <p class="text-slate-500 text-sm mt-1">Avaliação baseada no Manual do Formando (1ª Parte) do LTI DECivil.</p>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl px-8 py-5 flex items-center gap-6">
+                    <div>
+                        <p class="text-xs uppercase tracking-wider font-bold text-slate-400">Acertos</p>
+                        <p class="text-3xl font-extrabold text-[#003B73]"><span id="final-score">0</span><span class="text-lg text-slate-400 font-medium">/<span id="final-total">13</span></span></p>
+                    </div>
+                    <div class="h-10 w-px bg-slate-200"></div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wider font-bold text-slate-400">Nota</p>
+                        <p id="final-percentage" class="text-3xl font-extrabold text-[#009DE0]">0%</p>
+                    </div>
+                </div>
+
+                <div id="missed-questions-section" class="w-full text-left hidden flex-col gap-3 mt-2">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-rose-600 flex items-center gap-1.5">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                        Pontos do Manual a rever:
+                    </h3>
+                    <div id="missed-questions-list" class="flex flex-col gap-3"></div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-center gap-3 w-full pt-2">
+                    <button onclick="restartQuiz(false)" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#003B73] text-white font-semibold text-sm hover:bg-[#00284D] transition">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>Repetir Questionário Completo</span>
+                    </button>
+                    <button id="btn-retry-missed" onclick="restartQuiz(true)" class="hidden flex items-center gap-2 px-5 py-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-semibold text-sm hover:bg-rose-100 transition">
+                        <i data-lucide="repeat" class="w-4 h-4"></i>
+                        <span>Treinar Apenas as Erradas</span>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- ABA 3: SIMULADOR DE TURNO & POSTOS DE TRABALHO            -->
+        <!-- ========================================================= -->
+        <section id="view-simulator" class="hidden flex-col gap-6">
+            
+            <!-- Mapa de Postos, Espaços e Contactos Oficiais -->
+            <div class="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm flex flex-col gap-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-[#009DE0]">Arquitetura do Balcão & Escalonamento</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-[#003B73] mt-0.5">Funções de Cada PC, Espaços e Contactos</h2>
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <span class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-800 border border-rose-200 font-semibold">Segurança: ext. 2000</span>
+                        <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-semibold">Pedro Sanches (Pav.): ext. 2437</span>
+                        <span class="px-2.5 py-1 rounded-lg bg-sky-50 text-[#003B73] border border-sky-200 font-semibold">Balcão: 2001 | Gestão: 2002</span>
+                    </div>
+                </div>
+
+                <!-- Grid dos Postos do Balcão -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 rounded-2xl bg-sky-50/70 border border-sky-200 flex flex-col gap-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-sm text-[#003B73] flex items-center gap-1.5">
+                                <i data-lucide="monitor" class="w-4 h-4 text-[#009DE0]"></i> LTI-ATEND (Esquerda)
+                            </span>
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#003B73] text-white">Crítico Caixa</span>
+                        </div>
+                        <p class="text-xs text-slate-700 leading-relaxed">
+                            Impressões de <strong>pequeno formato</strong> (salas e KIOSKS) e gestão diária. <strong>A gaveta de dinheiro e as duas impressoras de talões estão ligadas a este PC</strong> — se estiver desligado, a caixa não abre!
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col gap-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-sm text-[#003B73] flex items-center gap-1.5">
+                                <i data-lucide="tv" class="w-4 h-4 text-[#009DE0]"></i> Monitor Central
+                            </span>
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-200 text-slate-700">POS</span>
+                        </div>
+                        <p class="text-xs text-slate-700 leading-relaxed">
+                            Monitor dedicado exclusivamente à visualização e progresso das vendas no sistema de faturação <strong>POS (WinRest NX)</strong>.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-sky-50/70 border border-sky-200 flex flex-col gap-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-sm text-[#003B73] flex items-center gap-1.5">
+                                <i data-lucide="fingerprint" class="w-4 h-4 text-[#009DE0]"></i> LTI-PLOT (Direita)
+                            </span>
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#009DE0] text-white">Plotters & Bio</span>
+                        </div>
+                        <p class="text-xs text-slate-700 leading-relaxed">
+                            <strong>Registos biométricos</strong> (impressão digital), <strong>impressões de grandes formatos</strong> (Plotters Canon TM-305 e IPF770), programa de <em>Capas de Tese</em>, apoio ao atendimento e gestão interna.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Salas e Infraestrutura -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <p class="font-bold text-xs text-[#003B73] uppercase mb-1">Sala V1.20.2 (Geral)</p>
+                        <p class="text-xs text-slate-600">84 PCs para alunos inscritos. Login: <code class="bg-white px-1 py-0.5 rounded border text-[#003B73] font-semibold">LTI-XX</code> (pass vazia). Entrada/saída só pelo torniquete.</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <p class="font-bold text-xs text-[#003B73] uppercase mb-1">Salas V1.20.1, 3 e V1.13</p>
+                        <p class="text-xs text-slate-600">31, 37 e 25 PCs. Aulas DECivil (GOP 8h–19h30) e cursos LTI. Login: <code class="bg-white px-1 py-0.5 rounded border text-[#003B73] font-semibold">SALA1/3/13</code> (pass vazia).</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <p class="font-bold text-xs text-[#003B73] uppercase mb-1">Sala de Gestão</p>
+                        <p class="text-xs text-slate-600">Acesso restrito a monitores. 4 PCs de gestão, cacifos, bastidor de rede/servidores e gaveta de RIs/IST-ID.</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200">
+                        <p class="font-bold text-xs text-amber-900 uppercase mb-1">Sala das UPS (1.45)</p>
+                        <p class="text-xs text-amber-900/90">Exterior junto à entrada. Unidades UPS e stocks imediatos (resmas/capas). <strong>Notificar sempre Serviços</strong> ao mexer no stock!</p>
+                    </div>
+                </div>
+
+                <!-- Prof Responsável & Hierarquia -->
+                <div class="p-3.5 rounded-2xl bg-[#003B73]/5 border border-[#003B73]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <span class="text-slate-700"><strong>Professor Responsável (Reclamações):</strong> Prof. Fernando Simões (Tel: 218418409 · fernando.simoes@tecnico.ulisboa.pt) — <em>Não existe livro de reclamações no LTI.</em></span>
+                    <span class="font-bold text-[#003B73] shrink-0">Hierarquia: 1. Acessos → 2. Venda Imediata → 3. Apoio → 4. Vigilância</span>
+                </div>
+            </div>
+
+            <!-- 6 Cenários Interativos de Roleplay -->
+            <div id="simulator-scenarios-list" class="flex flex-col gap-5">
+                <!-- Preenchido via JS -->
+            </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- ABA 4: CHECKLIST DE BOLSO (4 SECÇÕES OFICIAIS)            -->
+        <!-- ========================================================= -->
+        <section id="view-checklist" class="hidden flex-col gap-5">
+            
+            <div class="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex flex-col gap-1">
+                    <h2 class="text-lg font-bold text-[#003B73]">Checklist Operacional & Financeira de Bolso</h2>
+                    <p class="text-xs sm:text-sm text-slate-500">Procedimentos exatos das páginas 33 a 36 do Manual do Formando. Clica para marcar cada passo.</p>
+                </div>
+                <div class="flex items-center gap-4 self-start sm:self-center">
+                    <div class="text-right">
+                        <span class="text-xs text-slate-400 block">Progresso Total</span>
+                        <span id="checklist-global-counter" class="text-base font-extrabold text-[#009DE0]">0 / 23</span>
+                    </div>
+                    <button onclick="resetChecklists()" class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-95 transition text-xs sm:text-sm font-semibold">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>Reiniciar Tudo</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="checklist-sections-container" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Preenchido via JS -->
+            </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- ABA 5: RI vs. IST-ID & FATURAÇÃO (NOVA ABA DEDICADA)      -->
+        <!-- ========================================================= -->
+        <section id="view-ri-faturacao" class="hidden flex-col gap-6">
+            
+            <!-- Comparativo Lado a Lado: RI vs IST-ID -->
+            <div class="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm flex flex-col gap-5">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-[#009DE0]">Páginas 25 a 30 do Manual · Matéria Crítica de Avaliação</span>
+                    <h2 class="text-lg sm:text-xl font-bold text-[#003B73] mt-0.5">Requisição Interna (RI) vs. Projeto IST-ID</h2>
+                    <p class="text-xs sm:text-sm text-slate-600 mt-1">
+                        Ambas podem surgir em formulários idênticos, mas distinguem-se pelos <strong>dois primeiros dígitos do código PEP</strong> (e o IST-ID exige processo prévio na plataforma).
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <!-- Cartão RI -->
+                    <div class="rounded-2xl border-2 border-[#003B73]/20 bg-sky-50/30 p-5 flex flex-col gap-3">
+                        <div class="flex items-center justify-between border-b border-sky-200/70 pb-3">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-[#003B73]">Serviços Internos IST</span>
+                                <h3 class="text-lg font-extrabold text-[#003B73]">Requisição Interna (RI)</h3>
+                            </div>
+                            <span class="px-3 py-1 rounded-xl bg-[#003B73] text-white font-mono text-xs font-bold">PEP: 10...</span>
+                        </div>
+                        <ul class="space-y-2.5 text-xs sm:text-sm text-slate-700">
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-[#003B73]">• Código PEP:</span>
+                                <span>Começa por <strong>10</strong> (ex.: <code class="bg-white px-1.5 py-0.5 rounded border">1018P03659.1.01</code> → Projeto é <code class="bg-white px-1.5 py-0.5 rounded border">03659</code>; se for <code class="bg-white px-1.5 py-0.5 rounded border">10180</code> fica em branco).</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-[#003B73]">• Rapidez:</span>
+                                <span><strong>É imediato</strong> (basta validar os 12 campos obrigatórios da folha).</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-[#003B73]">• IVA & Preçário:</span>
+                                <span>Valor <strong>SEM IVA</strong> (usar sempre preçário <em>Geral</em>). Fazer orçamento RI no GEST para saber o preço exato sem IVA.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-[#003B73]">• Carrinhos no GEST:</span>
+                                <span>Criar <strong>2 carrinhos</strong>: da pessoa que levanta e do Departamento/Secção/Projeto (produtos vão no carrinho do Departamento).</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-[#003B73]">• Talões & Arquivo:</span>
+                                <span>Saem <strong>2 talões</strong> (1 para o cliente + 1 agrafado à RI). Folhas branca e verde ficam para o LTI (amarela no bloco). <strong>Iniciais do monitor a lápis</strong> nas observações. <strong>Sem registo no ticket.</strong></span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Cartão IST-ID -->
+                    <div class="rounded-2xl border-2 border-[#009DE0]/40 bg-cyan-50/30 p-5 flex flex-col gap-3">
+                        <div class="flex items-center justify-between border-b border-cyan-200/70 pb-3">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-[#009DE0]">Associação IST-ID</span>
+                                <h3 class="text-lg font-extrabold text-[#003B73]">Projeto IST-ID</h3>
+                            </div>
+                            <span class="px-3 py-1 rounded-xl bg-[#009DE0] text-white font-mono text-xs font-bold">PEP: 18...</span>
+                        </div>
+                        <ul class="space-y-2.5 text-xs sm:text-sm text-slate-700">
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-[#009DE0]">• Código PEP:</span>
+                                <span>Começa por <strong>18</strong> (ex.: <code class="bg-white px-1.5 py-0.5 rounded border">1801P.XXXXX.X.X</code>).</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-[#009DE0]">• Pré-requisito:</span>
+                                <span><strong>Pode não ser imediato!</strong> Só se inicia o trabalho após o cliente fornecer o n.º de processo da plataforma: <code class="bg-white px-1.5 py-0.5 rounded border font-bold">RD/XXXXXX</code>.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-[#009DE0]">• IVA & Orçamento:</span>
+                                <span>Valor <strong>COM IVA (23%)</strong>. Orçamento é passado obrigatoriamente no cliente/carrinho <strong>"IST-ID"</strong> (NIF 509830072).</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-[#009DE0]">• Venda no GEST:</span>
+                                <span>Criar/abrir carrinho do Departamento que requisitou, escolher pagamento IST-ID e preencher <code class="bg-white px-1.5 py-0.5 rounded border">RD/XXXXX</code> + ID do ticket.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-[#009DE0]">• Talões & Tickets:</span>
+                                <span>Imprime <strong>apenas 1 talão</strong> (agrafar ao orçamento/IST-ID e guardar na gaveta de RIs). <strong>Registo obrigatório nos tickets:</strong> <code class="bg-white px-1.5 py-0.5 rounded border">[IST-ID] RD/202X/IXXX</code>.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fluxo de Faturas com NIF + Preçários + Contas de Débito -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                
+                <!-- Passo-a-passo Faturas com NIF no POS -->
+                <div class="lg:col-span-2 bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm flex flex-col gap-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-sky-50 text-[#009DE0] flex items-center justify-center shrink-0">
+                            <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-[#003B73]">Passagem de Faturas com NIF no POS (Pág. 20)</h3>
+                            <p class="text-xs text-slate-500">Faturas emitidas em nome/NIF do IST (501 507 930) imediatamente após a venda.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                            <span class="font-bold text-[#003B73]">1. Login POS:</span> Separador <strong>"Registar"</strong> → utilizador <strong>"Monitor"</strong> → password <code class="bg-white px-1.5 py-0.5 rounded border font-bold">123</code>.
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                            <span class="font-bold text-[#003B73]">2. Preçário:</span> Escolher <strong>Alunos</strong> ou <strong>Geral</strong> conforme o cliente.
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                            <span class="font-bold text-[#003B73]">3. Artigos:</span> Selecionar itens/quantidades, passar para a direita, confirmar total e clicar no botão <strong>"€"</strong> (canto inferior direito).
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                            <span class="font-bold text-[#003B73]">4. Pagamento & Avançado:</span> Clicar no símbolo do método de pagamento (moedas/notas ou MB) e depois em <strong>"Avançado"</strong>.
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                            <span class="font-bold text-[#003B73]">5. NIF do Cliente (Secção 5.3):</span> Em <em>Entidade/Avançado</em>, se der <em>"N.º contribuinte não encontrado"</em>, ir ao menu <strong>Ficheiros → Clientes</strong> → Lupa → <strong>+</strong> (<em>Nova entidade</em>: preencher tudo; se não souber CP/localidade, usar <code class="bg-white px-1 py-0.5 rounded border font-bold">0000-000</code> e <code class="bg-white px-1 py-0.5 rounded border font-bold">Lisboa</code>) → OK e voltar à fatura.
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                            <span class="font-bold text-[#003B73]">6. Aplicar & Imprimir:</span> Clicar em <strong>"Aplicar"</strong> → <strong>"OK"</strong>. Sem papel: aba <em>Ecrã Civil 1 → IST-LTI → Fechar</em>. Com papel: aba <em>Imp. Civil 1 → IST-LTI</em>.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preçários e Contas de Débito -->
+                <div class="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm flex flex-col justify-between gap-4">
+                    <div class="flex flex-col gap-3">
+                        <h3 class="font-bold text-base text-[#003B73] flex items-center gap-2">
+                            <i data-lucide="tags" class="w-4 h-4 text-[#009DE0]"></i> Preçários & Contas de Débito
+                        </h3>
+                        <div class="p-3 rounded-xl bg-sky-50 border border-sky-200 text-xs">
+                            <span class="font-bold text-[#003B73] block mb-0.5">Tabela Azul · Alunos LTI</span>
+                            Apenas alunos inscritos no LTI DECivil em trabalhos académicos/não lucrativos.
+                        </div>
+                        <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs">
+                            <span class="font-bold text-emerald-800 block mb-0.5">Tabela Verde · Preçário Geral</span>
+                            Docentes, alunos de outros cursos, externos, <strong>todas as RIs</strong>, trabalhos comerciais/lucrativos ou faturas em nome de empresas.
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-[#003B73] text-white text-xs flex flex-col gap-1.5">
+                        <span class="font-bold text-[#009DE0] uppercase tracking-wider text-[10px]">Contas de Débito Autorizadas (Pág. 31)</span>
+                        <p>• <strong>Prof. Alberto Ferro</strong> (também autorizada: <em>Ana Filipa Marques</em>)</p>
+                        <p>• <strong>João Ramoa Correia</strong></p>
+                        <p class="text-[11px] text-sky-200 mt-1">Regra: Adicionar produtos apenas ao carrinho da pessoa autorizada e pagar por "Conta de Débito".</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- ABA 6: EXCEÇÕES E ARMADILHAS (9 ALERTAS DO MANUAL)        -->
+        <!-- ========================================================= -->
+        <section id="view-traps" class="hidden flex-col gap-5">
+            
+            <div class="bg-[#003B73] text-white rounded-2xl p-5 sm:p-6 shadow-sm flex items-start gap-4">
+                <div class="p-2.5 rounded-xl bg-amber-400/20 text-amber-300 border border-amber-400/30 shrink-0">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold">Radar de Exceções e Armadilhas do Manual</h2>
+                    <p class="text-xs sm:text-sm text-sky-100 mt-1 leading-relaxed">
+                        Detalhes técnicos e financeiros que saem frequentemente na avaliação teórica e prática. Revê cada cartão com atenção!
+                    </p>
+                </div>
+            </div>
+
+            <div id="traps-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Preenchido via JS -->
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 text-center text-xs text-slate-400">
+        Plataforma de Preparação LTI DECivil (IST) · Baseada no Manual do Formando (1ª Parte) e Slides de Formação 2026/27.
+    </footer>
+
+    <!-- Modal de Confirmação para Limpar Progresso -->
+    <div id="reset-modal" onclick="handleResetModalBackdrop(event)" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4">
+            <div class="flex items-start gap-3.5">
+                <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Limpar todo o progresso?</h3>
+                    <p class="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
+                        Esta ação vai apagar a memória dos <strong>Flashcards</strong>, a melhor nota do <strong>Questionário</strong>, as respostas do <strong>Simulador</strong> e os vistos da <strong>Checklist</strong>.
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+                <button onclick="closeResetModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm transition">
+                    Cancelar
+                </button>
+                <button onclick="confirmResetProgress()" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition flex items-center gap-1.5">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    <span>Sim, limpar tudo</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contentor de Notificações Toast -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-xs sm:max-w-sm"></div>
+
+    <!-- Lógica da Aplicação -->
+    <script>
+        // =========================================================================
+        // 1. DADOS DOS FLASHCARDS (20 CARTÕES OFICIAIS DO MANUAL)
+        // =========================================================================
+        const flashcardsData = [
+            {
+                id: 1,
+                category: "Alunos & Elegibilidade",
+                front: "Quais são os cursos cujos alunos têm direito a inscrever-se gratuitamente no LTI DECivil?",
+                back: "Engenharia Civil, Arquitetura, Engenharia do Ambiente, Ordenamento do Território e Urbanismo, Engenharia de Sistemas de Transportes, e Diplomas de Formação Avançada / Doutoramentos do DECivil."
+            },
+            {
+                id: 2,
+                category: "Alunos & Elegibilidade",
+                front: "Um aluno de Eng. Eletrotécnica está inscrito este semestre numa cadeira de Eng. Civil. Pode inscrever-se no LTI?",
+                back: "Sim! Qualquer aluno do IST inscrito no semestre atual numa disciplina de um dos cursos servidos pelo LTI DECivil tem direito de acesso, mediante apresentação de declaração assinada pelo Professor responsável da UC."
+            },
+            {
+                id: 3,
+                category: "Alunos & Elegibilidade",
+                front: "Quando é que um aluno inscrito no LTI tem de pagar pelo preçário 'Geral' (verde) em vez do 'Aluno LTI' (azul)?",
+                back: "Em 3 situações: 1) Pagamento por Requisição Interna (RI); 2) Trabalhos com fim lucrativo ou para terceiros (catálogos, projetos para empresas); 3) Quando pede fatura/venda em nome de uma empresa ou terceiros."
+            },
+            {
+                id: 4,
+                category: "Postos & Espaços",
+                front: "Qual a diferença de funções entre os dois computadores do balcão: LTI-ATEND (esquerda) e LTI-PLOT (direita)?",
+                back: "LTI-ATEND: impressões de pequeno formato (salas/KIOSKS), gestão diária, e tem ligadas a gaveta de dinheiro e as impressoras de talões. LTI-PLOT: registos biométricos, plotagens de grandes formatos, capas de tese e gestão interna."
+            },
+            {
+                id: 5,
+                category: "Postos & Espaços",
+                front: "Quais são as credenciais de login para os PCs da sala geral (V1.20.2) e para as salas de aula (V1.20.1, V1.20.3 e V1.13)?",
+                back: "Sala V1.20.2 (84 PCs): Username 'LTI-XX' (XX = n.º do PC) e Password vazia (clicar Enter). Salas V1.20.1, V1.20.3 e V1.13 (31, 37 e 25 PCs): Username 'SALA1', 'SALA3' ou 'SALA13' e Password vazia."
+            },
+            {
+                id: 6,
+                category: "Postos & Espaços",
+                front: "Onde fica a Sala das UPS (1.45) e qual a regra obrigatória ao mexer nos stocks lá guardados?",
+                back: "Fica junto à porta de vidro de entrada do LTI, do lado exterior. Alberga a unidade UPS e stocks imediatos (resmas, contracapas). Regra: sempre que se coloca ou retira material, é obrigatório notificar a secção dos Serviços."
+            },
+            {
+                id: 7,
+                category: "Hierarquia & Regras",
+                front: "Qual é a Hierarquia de Funções (1 a 7) que o monitor deve respeitar durante um turno de atendimento?",
+                back: "1. Controlo de entradas/saídas; 2. Serviços de venda imediata; 3. Apoio ao utilizador; 4. Controlo/vigilância do espaço; 5. Venda a médio prazo (plotagens 4h / teses 24h); 6. Lista '2 Do'; 7. Tarefas de gestão interna."
+            },
+            {
+                id: 8,
+                category: "Hierarquia & Regras",
+                front: "Enumera 4 regras críticas da Sala V1.20.2 (portáteis, tempo de ausência, líquidos e mochilas).",
+                back: "1) Portáteis apenas na metade livre da mesa; 2) Abandono máximo do posto de 15 minutos (depois o monitor pode libertar o lugar); 3) Proibido comer/beber exceto água, mas sem garrafas em cima das mesas; 4) Proibido pousar mochilas sobre as torres."
+            },
+            {
+                id: 9,
+                category: "Hierarquia & Regras",
+                front: "Quais são os horários de funcionamento do LTI em período normal e em período de exames (com e sem cursos)?",
+                back: "Período normal: 8h00–20h00 (sem cursos) ou 8h00–22h30 (com cursos). Período de exames: 9h00–21h00 (sem cursos) ou 9h00–22h30 (com cursos). Encerrado domingos, feriados e no mês de Agosto."
+            },
+            {
+                id: 10,
+                category: "RI vs. IST-ID",
+                front: "Como distinguir imediatamente no papel ou PEP uma Requisição Interna (RI) de um projeto IST-ID?",
+                back: "Pelos dois primeiros dígitos do código PEP: se começar por '10' (ex: 1018P...) é uma Requisição Interna (RI); se começar por '18' (ex: 1801P...) é um projeto IST-ID."
+            },
+            {
+                id: 11,
+                category: "RI vs. IST-ID",
+                front: "Quais as principais diferenças de IVA, talões e tickets entre uma RI e uma IST-ID?",
+                back: "RI: imediata, SEM IVA, carrinho do Departamento, 2 talões (1 cliente + 1 agrafado à RI), sem ticket. IST-ID: exige n.º processo RD/XXXXXX antes de imprimir, COM IVA, orçamento no carrinho 'IST-ID', 1 talão, registo obrigatório no ticket."
+            },
+            {
+                id: 12,
+                category: "Faturação & Pagamentos",
+                front: "Quais os passos para passar uma fatura com NIF no POS (incluindo utilizador e password)?",
+                back: "Registar → 'Monitor' (pass: 123) → Preçário (Alunos/Geral) → passar itens → botão '€' → símbolo pagamento → 'Avançado' → Lupa (pesquisar ou criar nova entidade) → 'Aplicar' → 'OK' → Ecrã Civil 1 ou Imp. Civil 1 ('IST-LTI')."
+            },
+            {
+                id: 13,
+                category: "Faturação & Pagamentos",
+                front: "Quais os cuidados essenciais ao abrir e operar o terminal Multibanco (TPA)?",
+                back: "Abrir só na 1ª venda do dia (Menu → Supervisor → Ativar → Não Utilizar → NIB → Verde sem alterar nada → negar talão abertura). Ao cobrar, escrever o valor até à centésima (a tecla '.' não funciona!) e imprimir 2 talões."
+            },
+            {
+                id: 14,
+                category: "Faturação & Pagamentos",
+                front: "Quem tem Contas de Débito autorizadas no LTI e como se processa o pagamento?",
+                back: "Prof. Alberto Ferro (também autorizada: Ana Filipa Marques) e João Ramoa Correia. Adicionam-se os produtos ao carrinho da pessoa autorizada e seleciona-se o método de pagamento 'Conta de Débito'."
+            },
+            {
+                id: 15,
+                category: "Abertura & Fecho",
+                front: "O que deve o monitor fazer na abertura antes de abrir portas (portaria, caixa e folha de passagem)?",
+                back: "Estar na portaria 15 min antes para assinar e levantar a chave; confirmar no POS se a data é a do dia atual (fecho feito na véspera), recontar o dinheiro em caixa e validar no ticket; ler a folha 'Passagem de Informação - Caráter Obrigatório'."
+            },
+            {
+                id: 16,
+                category: "Abertura & Fecho",
+                front: "Quais são os marcos horários críticos no procedimento de fecho (1h, 30 min e 5 min antes)?",
+                back: "1h antes: avisar utilizadores do fecho e que vendas fecham 30 min antes. 30 min antes: iniciar fecho de caixa/financeiro. 5 min antes: reiniciar remotamente todos os PCs (exceto salas com cursos a decorrer) e enviar avarias ao grupo da Técnica."
+            },
+            {
+                id: 17,
+                category: "Abertura & Fecho",
+                front: "Quais os passos exatos do Fecho Financeiro no 'Novo POS' e no TPA Multibanco?",
+                back: "Confirmar faturas NIF e MB → emitir Faturas Simplificadas (Aluno LTI e Geral) sem exceder 100€ cada → Apuramento de dia → fechar TPA MB (Supervisor → Desativar Fecho, sem clicar em TOTAIS) → Encerrar dia no POS → agrafar SCA + Apuramento e 2ª via SCA + fecho MB."
+            },
+            {
+                id: 18,
+                category: "Impressões & Encadernação",
+                front: "Que tipos de papel suportam impressão A3 e frente-e-verso na impressora laser do LTI?",
+                back: "90g, 120g e Brilhante (140g): fazem A4, A3 e frente-e-verso. Papel Colorido (80g): só A4 (faz frente-e-verso). Acetato: só A4 e NÃO faz frente-e-verso."
+            },
+            {
+                id: 19,
+                category: "Impressões & Encadernação",
+                front: "Como proceder perante folhas em branco involuntárias ou trabalhos externos para encadernação?",
+                back: "Folhas em branco: se culpa do aluno, cobra-se P&B cat. 1 (gasta kit fusor/transferência). Nunca imprimir em folhas externas ou já impressas. Encadernação de trabalhos externos: recomendar baguete plástica (feita pelo cliente) e avisar que o LTI não assume erros de furação."
+            },
+            {
+                id: 20,
+                category: "Diversos & Emergência",
+                front: "Quais são os contactos de emergência, o prazo de Perdidos e Achados e o procedimento para reclamações?",
+                back: "Central de Segurança: ext. 2000; Resp. Pavilhão Pedro Sanches: ext. 2437; 112. Perdidos e achados guardam-se 1 mês (depois pens ficam para o LTI). Não há livro de reclamações: remeter por e-mail ao Prof. Responsável (Prof. Fernando Simões)."
+            },
+            {
+                id: 21,
+                category: "Faturação & Pagamentos",
+                front: "O que fazer no POS quando surge 'N.º contribuinte não encontrado' ao emitir fatura com NIF, e se o cliente não souber o código postal?",
+                back: "Nunca emitir fatura sem ficha registada! Ir ao menu Ficheiros > Clientes → Lupa (em baixo) → botão '+' (canto inf. esquerdo) → preencher Nova entidade (Telefone/Email facultativos). Se o cliente não souber CP/localidade, usar '0000-000' e 'Lisboa' → OK → regressar à fatura."
+            }
+        ];
+
+        // =========================================================================
+        // 2. DADOS DO QUESTIONÁRIO (12 PERGUNTAS BASEADAS NO MANUAL)
+        // =========================================================================
+        const allQuizQuestions = [
+            {
+                id: 1,
+                category: "RI vs. IST-ID",
+                question: "Um investigador apresenta um formulário de requisição com o código PEP '1801P04512.1.01' para imprimir 4 posters A0. Como deves identificar e processar este pedido?",
+                options: [
+                    "É uma Requisição Interna (RI) normal; imprimir de imediato sem IVA e emitir 2 talões.",
+                    "É um projeto IST-ID (começa por 18); não podes iniciar a impressão sem o n.º de processo RD/XXXXXX, o orçamento tem IVA (23%) no carrinho 'IST-ID' e exige registo nos tickets.",
+                    "É uma Conta de Débito do Departamento; basta registar no carrinho do investigador sem orçamento.",
+                    "É uma Requisição Interna; deve ser passada como Fatura Simplificada no POS até 100€."
+                ],
+                correctIndex: 1,
+                explanation: "Pág. 28–30 do Manual: Códigos PEP iniciados por '18' identificam projetos IST-ID (enquanto '10' identifica RI). Exigem o n.º de processo RD/XXXXXX antes de imprimir, orçamento com IVA no cliente 'IST-ID', apenas 1 talão e registo obrigatório no ticket."
+            },
+            {
+                id: 2,
+                category: "Postos & Equipamentos",
+                question: "Estás sozinho no turno e precisas de registar uma venda em dinheiro e imprimir o respetivo talão, mas a gaveta de dinheiro não abre e a impressora de talões não responde. Qual é a causa mais provável segundo o manual?",
+                options: [
+                    "O computador LTI-PLOT (à direita) está desligado ou sem sessão iniciada.",
+                    "A sala das UPS (1.45) tem o disjuntor das impressoras desligado.",
+                    "O computador LTI-ATEND (à esquerda) está desligado ou sem sessão iniciada.",
+                    "O terminal Multibanco ainda está 'FORA DE SERVIÇO'."
+                ],
+                correctIndex: 2,
+                explanation: "Pág. 21 do Manual: A caixa de dinheiro e as duas impressoras de talões estão ligadas ao LTI-ATEND (PC da esquerda). Se estiveres a usar apenas o LTI-PLOT e o LTI-ATEND não tiver sessão iniciada, não sai talão nem a caixa abre."
+            },
+            {
+                id: 3,
+                category: "Fecho Financeiro",
+                question: "Durante o fecho financeiro (30 minutos antes de encerrar), o total de vendas a dinheiro (VD) no GEST é de 145,00€. Como deves emitir a(s) Fatura(s) Simplificada(s) no POS?",
+                options: [
+                    "Emitir uma única Fatura Simplificada no valor total de 145,00€ no preçário Geral.",
+                    "Como cada Fatura Simplificada não pode exceder os 100€, deves dividir e emitir duas faturas simplificadas (separando também os itens Aluno LTI dos itens Geral).",
+                    "Deixar os 45,00€ excedentes para o fecho de caixa do dia seguinte.",
+                    "Emitir uma Fatura-Recibo com o NIF do próprio LTI (501 507 930)."
+                ],
+                correctIndex: 1,
+                explanation: "Pág. 35 do Manual: No fecho financeiro, passam-se faturas simplificadas com os itens Aluno LTI e com os itens Geral, sem nunca exceder os 100€ por fatura (se exceder, passa-se outra fatura com o restante)."
+            },
+            {
+                id: 4,
+                category: "Multibanco & POS",
+                question: "Um cliente vai pagar 4,50€ por Multibanco no terminal TPA e pretende fatura com NIF. Qual a afirmação CORRETA sobre este procedimento?",
+                options: [
+                    "No terminal TPA deves digitar '4', depois a tecla '.' e depois '50', e no fecho do dia clicar em 'TOTAIS'.",
+                    "A tecla '.' no TPA não serve para nada (deves digitar 450 até à centésima), e no fecho do TPA nunca se deve clicar em 'TOTAIS'.",
+                    "As vendas a Multibanco são somadas todas juntas numa única fatura simplificada no fecho do dia.",
+                    "A sessão do terminal Multibanco deve ser aberta logo às 7h45 na abertura, mesmo antes de haver vendas."
+                ],
+                correctIndex: 1,
+                explanation: "Pág. 23 e 36 do Manual: No TPA a tecla '.' não funciona (escreve-se sempre até à centésima), abre-se só na 1ª venda do dia e, no fecho (Supervisor → Desativar Fecho), nunca se clica em TOTAIS. Além disso, vendas MB são faturadas separadamente no POS."
+            },
+            {
+                id: 5,
+                category: "Preçários & Elegibilidade",
+                question: "Um aluno inscrito em Engenharia Civil no IST pede para imprimir 200 catálogos comerciais a cores para promover uma empresa externa onde trabalha, pedindo fatura com o NIF dessa empresa. Que preçário se aplica?",
+                options: [
+                    "Preçário Aluno LTI (tabela azul), pois o aluno está devidamente inscrito no DECivil.",
+                    "Preçário Geral (tabela verde), porque se trata de um serviço com fim lucrativo/para terceiros e fatura em nome de empresa.",
+                    "Preçário RI (sem IVA), por ser aluno do IST.",
+                    "O LTI não pode realizar impressões para alunos que trabalhem em empresas."
+                ],
+                correctIndex: 1,
+                explanation: "Pág. 22 do Manual: O preçário 'Alunos LTI' aplica-se apenas a serviços académicos ou pessoais não lucrativos. Para fins lucrativos/terceiros ou faturas em nome de empresas, aplica-se sempre o preçário 'Geral'."
+            },
+            {
+                id: 6,
+                category: "Impressões & Consumíveis",
+                question: "Um aluno envia um documento para impressão laser mas, por erro de formatação do próprio ficheiro, saem 3 folhas totalmente em branco. O aluno recusa-se a pagá-las alegando que não têm tinta. Como deves proceder?",
+                options: [
+                    "Não cobrar nada e voltar a colocar as 3 folhas brancas na gaveta da impressora para reutilizar.",
+                    "Cobrar as 3 folhas ao preço de impressão P&B de categoria 1, pois passaram pelo kit fusor/transferência (descontando vida útil e alterando o papel), não podendo ser reutilizadas na impressora.",
+                    "Assumir sempre o custo pelo LTI, independentemente de quem foi a culpa.",
+                    "Cobrar o valor de impressão a cores > 50% como penalização."
+                ],
+                correctIndex: 1,
+                explanation: "Pág. 39 do Manual: Se as folhas em branco resultarem de erro do utilizador, cobra-se P&B cat. 1 (gasta vida útil do kit fusor e kit de transferência). Como foram aquecidas pelo fusor, não podem voltar às gavetas da impressora (vão para rascunho ou reciclagem)."
+            },
+            {
+                id: 7,
+                category: "Abertura & Fecho",
+                question: "No encerramento do LTI ao final do dia, quais equipamentos NUNCA devem ser desligados pelo monitor de turno?",
+                options: [
+                    "Os computadores das salas de aula e o ar condicionado.",
+                    "As plotters, a impressora laser e o torniquete (apenas se baixa o braço no botão preto do controlador).",
+                    "Os videoprojetores e a iluminação da Sala V1.20.2.",
+                    "Os computadores da Sala de Gestão e os KIOSKS."
+                ],
+                correctIndex: 1,
+                explanation: "Pág. 34 do Manual (Nota destacada): 'NÃO DESLIGAR AS PLOTTERS, IMPRESSORA LASER E TORNIQUETE.' No torniquete apenas se carrega no botão preto do controlador para baixar o braço."
+            },
+            {
+                id: 8,
+                category: "Hierarquia de Funções",
+                question: "Estás a preparar uma plotagem com prazo de 4 horas quando um aluno fica bloqueado no torniquete (sinal sonoro de erro) e outro aluno aguarda no balcão para encadernar um relatório impresso na hora. Qual a ordem correta de prioridade?",
+                options: [
+                    "1. Terminar a plotagem → 2. Encadernar o relatório → 3. Resolver o torniquete.",
+                    "1. Resolver o controlo de acesso no torniquete → 2. Realizar a encadernação (venda imediata) → 3. Retomar a plotagem (venda a médio prazo).",
+                    "1. Fazer a encadernação → 2. Terminar a plotagem → 3. Pedir ao aluno do torniquete para esperar pelo próximo turno.",
+                    "1. Verificar a Lista '2 Do' → 2. Resolver o torniquete → 3. Encadernar."
+                ],
+                correctIndex: 1,
+                explanation: "Pág. 16–17 do Manual: Hierarquia oficial: 1.º Controlo de entradas/saídas; 2.º Serviços de venda imediata (impressões laser, encadernações); 3.º Apoio ao utilizador; 4.º Vigilância; 5.º Serviços de venda a médio prazo (plotagens 4h / teses 24h)."
+            },
+            {
+                id: 9,
+                category: "Tipos de Papel",
+                question: "Um utilizador precisa de imprimir 10 transparências (acetato) em formato A3 e frente-e-verso para uma apresentação de Arquitetura. O que lhe deves informar?",
+                options: [
+                    "Que o acetato está disponível em A3, mas só imprime numa face.",
+                    "Que o acetato existe apenas em formato A4 e NÃO permite impressão em frente-e-verso.",
+                    "Que pode trazer acetatos comprados fora do LTI para imprimir na bandeja automática.",
+                    "Que o acetato só pode ser impresso nos plotters."
+                ],
+                correctIndex: 1,
+                explanation: "Pág. 37 do Manual (Tabela de Tipos de Papel): Papel Colorido e Acetato existem apenas em tamanho A4 (não há A3), e o Acetato é o único que não permite frente-e-verso."
+            },
+            {
+                id: 10,
+                category: "Encadernações",
+                question: "Um cliente traz um trabalho já impresso numa gráfica externa e pede uma encadernação com argolas metálicas. Qual o procedimento obrigatório segundo o manual?",
+                options: [
+                    "Recusar qualquer tipo de venda de consumíveis para trabalhos externos.",
+                    "Furar normalmente; se a máquina encravar e estragar as folhas, o LTI paga a reimpressão.",
+                    "Recomendar a venda de baguetes plásticas (que o próprio cliente coloca) e avisar que, se optar pela furação, o LTI não se responsabiliza nem recupera folhas não impressas no LTI.",
+                    "Fazer encadernação térmica gratuitamente como cortesia."
+                ],
+                correctIndex: 2,
+                explanation: "Pág. 40–41 do Manual: O LTI só assume o custo de reimpressão por erro de furação se o trabalho tiver sido impresso no LTI. Para trabalhos externos, recomenda-se baguete plástica (sem serviço de montagem incluído) e avisa-se que o LTI não se responsabiliza por danos."
+            },
+            {
+                id: 11,
+                category: "Faturação POS",
+                question: "Na passagem de uma fatura com NIF no POS, qual é o utilizador e a password para entrar na secção 'Registar'?",
+                options: [
+                    "Utilizador 'LTI-ATEND' e password vazia.",
+                    "Utilizador 'Monitor' e password '123'.",
+                    "Utilizador 'Supervisor' e password '0000'.",
+                    "O número de aluno ist1xxxxx e a password do Fénix."
+                ],
+                correctIndex: 1,
+                explanation: "Pág. 20 do Manual: Na secção 'Registar' do POS, seleciona-se o utilizador 'Monitor' e introduz-se a password '123'."
+            },
+            {
+                id: 12,
+                category: "Diversos & Segurança",
+                question: "Um utilizador insatisfeito exige o Livro de Reclamações do LTI DECivil devido a um atraso numa plotagem. Como deves responder?",
+                options: [
+                    "Entregar o Livro de Reclamações físico guardado na gaveta de RIs da Sala de Gestão.",
+                    "Informar que o LTI não é uma entidade independente e por isso não possui Livro de Reclamações próprio, devendo a reclamação ser remetida por e-mail ao Professor Responsável (Prof. Fernando Simões).",
+                    "Encaminhar o utilizador para a Reitoria da Universidade de Lisboa na Alameda.",
+                    "Registar a reclamação na folha 'Passagem de Informação - Caráter Obrigatório' como reclamação oficial."
+                ],
+                correctIndex: 1,
+                explanation: "Pág. 45 do Manual (Secção 9.6): 'Não sendo uma entidade independente, o LTI não tem livro de reclamações. Qualquer reclamação que surja deverá ser remetida para o Professor Responsável, através de e-mail' (Prof. Fernando Simões - fernando.simoes@tecnico.ulisboa.pt)."
+            },
+            {
+                id: 13,
+                category: "Faturação & NIF (Secção 5.3)",
+                question: "Ao emitir uma fatura com NIF no POS surge o aviso 'N.º contribuinte não encontrado' e o cliente diz que não sabe o seu código postal nem a localidade. Como deves proceder?",
+                options: [
+                    "Inserir o NIF apenas no ecrã final da venda e deixar o código postal em branco para concluir rápido.",
+                    "Aceder a Ficheiros > Clientes, pesquisar na lupa, criar Nova entidade (+) preenchendo os campos obrigatórios com '0000-000' e 'Lisboa', guardar em OK e regressar à fatura.",
+                    "Emitir Fatura Simplificada sem NIF porque o sistema não aceita clientes sem código postal real.",
+                    "Preencher o código postal do IST (1049-001) e colocar o telefone e e-mail como campos obrigatórios."
+                ],
+                correctIndex: 1,
+                explanation: "Secção 5.3 (Adição de Clientes): Nunca se deve emitir fatura com NIF sem criar a ficha em Ficheiros > Clientes. Código postal e localidade são obrigatórios; caso não seja possível obtê-los, usa-se '0000-000' e 'Lisboa' (Telefone e Email são facultativos)."
+            }
+        ];
+
+        // =========================================================================
+        // 3. DADOS DO SIMULADOR DE TURNO (6 CENÁRIOS REAIS DE ROLEPLAY)
+        // =========================================================================
+        const simulatorScenarios = [
+            {
+                id: 1,
+                role: "Aluno de Engenharia Eletrotécnica",
+                badge: "Inscrição & Elegibilidade (Pág. 32)",
+                situation: "Um aluno aproxima-se do balcão: «Olá! Sou de Eng. Eletrotécnica, mas este semestre estou inscrito numa cadeira de Eng. Civil e preciso de usar o AutoCAD nos PCs da Sala 2. Quando meto o meu número no Fénix aqui no balcão dá erro/não deixa inscrever automaticamente. Posso entrar?»",
+                options: [
+                    {
+                        text: "Explicar que alunos fora dos cursos do DECivil nunca podem aceder à Sala V1.20.2, mesmo que tenham cadeiras de Civil.",
+                        status: "error",
+                        title: "Erro de Regulamento (Exceção Ignorada)",
+                        feedback: "Errado! A pág. 32 do manual prevê expressamente esta exceção: alunos de outros cursos do IST inscritos no semestre atual numa UC de um curso servido pelo LTI DECivil têm direito a inscrever-se."
+                    },
+                    {
+                        text: "Solicitar uma declaração assinada pelo Professor responsável dessa disciplina de Civil que ateste a inscrição no presente semestre, verificar o NIF/contactos e registar as impressões digitais no LTI-PLOT.",
+                        status: "correct",
+                        title: "Atuação 100% Conforme o Manual",
+                        feedback: "Exato! Com a declaração assinada pelo docente da UC, o aluno fica elegível durante esse semestre. Depois basta recolher NIF, telefone, e-mail e gravar as duas impressões digitais no LTI-PLOT."
+                    },
+                    {
+                        text: "Abrir manualmente o torniquete sempre que ele aparecer, sem fazer inscrição no GEST para não sujar a base de dados.",
+                        status: "warning",
+                        title: "Procedimento Incorreto",
+                        feedback: "Todos os utilizadores da Sala V1.20.2 têm de estar registados no GEST (com assinatura das regras e biometria), para controlo de acessos e responsabilização."
+                    }
+                ]
+            },
+            {
+                id: 2,
+                role: "Bolseiro de Investigação (DECivil)",
+                badge: "RI vs. IST-ID (Pág. 28–30)",
+                situation: "Um bolseiro entrega uma folha de requisição preenchida com o código PEP '1801P08912.1.01' e diz: «Preciso disto impresso em A1 ainda hoje, o responsável do projeto já assinou esta folha!»",
+                options: [
+                    {
+                        text: "Como a folha tem assinatura no campo 'Concordo', criar 2 carrinhos no GEST, imprimir já sem IVA e agrafar 1 talão à folha.",
+                        status: "error",
+                        title: "Armadilha Clássica (PEP 18 = IST-ID!)",
+                        feedback: "Cuidado! O PEP começa por '18' (1801P...), logo NÃO é uma RI, é uma IST-ID! A folha em papel já não é aceite sozinha e não podes imprimir sem o número de processo RD/XXXXXX."
+                    },
+                    {
+                        text: "Informar que, por o PEP começar por 18 (IST-ID), só podes iniciar a impressão após receber o n.º de processo RD/XXXXXX. Fazer um orçamento com IVA no carrinho 'IST-ID' para o cliente submeter na plataforma e abrir o respetivo ticket.",
+                        status: "correct",
+                        title: "Excelente! Detetaste o PEP 1801P",
+                        feedback: "Perfeito! Passas o orçamento com IVA (23%) no cliente 'IST-ID' (NIF 509830072), envias ao cliente para ele obter o RD/XXXXXX e crias o ticket [IST-ID] RD/202X/IXXX."
+                    },
+                    {
+                        text: "Passar um orçamento sem IVA no carrinho do Departamento para ele levar ao responsável.",
+                        status: "warning",
+                        title: "Erro no IVA e no Carrinho do Orçamento",
+                        feedback: "Ao contrário da RI (sem IVA, carrinho do Departamento), na IST-ID o orçamento leva IVA (23%) e tem de ser feito obrigatoriamente no cliente/carrinho 'IST-ID'."
+                    }
+                ]
+            },
+            {
+                id: 3,
+                role: "Cliente no Balcão (Pagamento MB + NIF)",
+                badge: "Terminal TPA & POS (Pág. 20 e 23)",
+                situation: "É a primeira venda do dia (12,50€) e o cliente quer pagar por Multibanco e levar fatura com NIF impressa. O TPA diz 'FORA DE SERVIÇO' e a gaveta de dinheiro/impressora de talões não reage.",
+                options: [
+                    {
+                        text: "Verificar se o PC LTI-ATEND está ligado; abrir sessão no TPA (Menu → Supervisor → Ativar → Não Utilizar → NIB → Verde sem alterar → negar talão abertura); digitar '1250' no TPA (sem usar a tecla '.'); emitir fatura no POS (Monitor / 123) em 'Imp. Civil 1'.",
+                        status: "correct",
+                        title: "Fluxo Financeiro Perfeito!",
+                        feedback: "Acertaste em todos os detalhes críticos: LTI-ATEND controla talões/caixa, abertura do TPA só na 1ª venda sem imprimir talão de abertura, valor digitado até à centésima sem tecla '.', e impressão da fatura na aba 'Imp. Civil 1'."
+                    },
+                    {
+                        text: "Abrir o TPA imprimindo o talão de abertura, digitar '12.50' usando a tecla '.' e emitir a fatura no POS através da aba 'Ecrã Civil 1'.",
+                        status: "error",
+                        title: "Vários Erros de Procedimento",
+                        feedback: "1) Nega-se o talão de abertura para poupar rolo; 2) A tecla '.' no TPA não funciona (digita-se 1250); 3) Como o cliente quer fatura impressa, usa-se 'Imp. Civil 1' ('Ecrã Civil 1' é quando não quer papel)."
+                    },
+                    {
+                        text: "Dizer ao cliente para pagar em dinheiro porque o Multibanco está avariado quando diz 'FORA DE SERVIÇO'.",
+                        status: "error",
+                        title: "Falta de Conhecimento do TPA",
+                        feedback: "'FORA DE SERVIÇO' significa apenas que a sessão diária do TPA ainda não foi aberta na 1ª venda do dia!"
+                    }
+                ]
+            },
+            {
+                id: 4,
+                role: "Docente em Aula na Sala V1.20.1",
+                badge: "Suporte Técnico em Sala (Pág. 42–43)",
+                situation: "Um professor chama-te à Sala 1 (V1.20.1): «O projetor diz 'NO SIGNAL' e, quando tento escrever no quadro, o teclado está todo trocado (o '@' e os acentos não batem certo)!»",
+                options: [
+                    {
+                        text: "Verificar/recolocar o cabo do projetor, usar o atalho 'Tecla Windows + P' para duplicar/estender o ecrã, e corrigir o teclado de ENG para POR clicando no canto inferior direito ou premindo 'Tecla Windows + Espaço'.",
+                        status: "correct",
+                        title: "Resolução Técnica Rápida e Eficaz",
+                        feedback: "Correto! Estes são exatamente os procedimentos da Secção 8 (Técnica, pág. 43): verificar cabo VGA/HDMI do projetor, configurar visualização via Win+P e alternar o idioma do teclado com Win+Espaço."
+                    },
+                    {
+                        text: "Reiniciar remotamente todos os 31 computadores da Sala 1 através do GEST a meio da aula.",
+                        status: "error",
+                        title: "Erro Grave Durante a Aula",
+                        feedback: "O restart remoto limpa os discos e fecha o trabalho de todos os alunos na sala — só se faz a pedido do professor (ex.: entre turnos de testes) ou no fecho!"
+                    },
+                    {
+                        text: "Ligar de imediato para a Central de Segurança (ext. 2000) a reportar avaria crítica.",
+                        status: "warning",
+                        title: "Escalonamento Desnecessário",
+                        feedback: "Cabo solto, projeção (Win+P) e idioma do teclado (ENG/POR) são problemas comuns resolvidos autonomamente pelo monitor de turno."
+                    }
+                ]
+            },
+            {
+                id: 5,
+                role: "Aluno com Portfólio já Impresso Fora",
+                badge: "Encadernações (Pág. 40–41)",
+                situation: "Um aluno chega com um portfólio de Arquitetura impresso numa gráfica externa (com desenhos manuais intercalados) e pede para furar e colocar argolas metálicas.",
+                options: [
+                    {
+                        text: "Furar imediatamente; se a máquina encravar e rasgar as folhas, o LTI assume a responsabilidade e reimprime tudo.",
+                        status: "error",
+                        title: "Erro de Responsabilidade (Pág. 40)",
+                        feedback: "O LTI só assume o custo de reimpressão por erro de furação quando o trabalho foi impresso no LTI!"
+                    },
+                    {
+                        text: "Recomendar a aquisição de baguetes plásticas (que o próprio cliente coloca sem furar) e avisar expressamente que, se insistir na furação, o LTI não se responsabiliza nem consegue recuperar o trabalho em caso de erro.",
+                        status: "correct",
+                        title: "Atuação Preventiva Correta",
+                        feedback: "Exato! Para trabalhos não impressos no LTI ou com desenhos manuais, recomenda-se baguete plástica e avisa-se o cliente que o LTI não assume danos na furação."
+                    },
+                    {
+                        text: "Sugerir encadernação térmica no PC LTI-ATEND usando capa em papel brilhante.",
+                        status: "warning",
+                        title: "Posto e Procedimento Errados",
+                        feedback: "O programa de capas térmicas está no LTI-PLOT, e para trabalhos externos com desenhos manuais o manual recomenda baguetes plásticas para evitar danos."
+                    }
+                ]
+            },
+            {
+                id: 6,
+                role: "Monitor em Final de Turno (Fecho)",
+                badge: "Procedimento de Fecho (Pág. 34)",
+                situation: "São 19h55 (o LTI fecha às 20h00 em período normal sem cursos). Já fizeste o fecho de caixa às 19h30 e não houve nenhuma ocorrência especial durante o turno.",
+                options: [
+                    {
+                        text: "Desligar os disjuntores das plotters, da impressora laser e do torniquete no quadro elétrico, deixar a folha de passagem em branco e entregar a chave na portaria.",
+                        status: "error",
+                        title: "3 Erros Críticos de Fecho!",
+                        feedback: "1) NUNCA se desligam plotters, impressora laser nem torniquete (só se baixa o braço no botão preto); 2) Mesmo sem ocorrências, é obrigatório escrever 'nada a passar' na folha de Passagem de Informação."
+                    },
+                    {
+                        text: "Reiniciar remotamente os PCs das salas e gestão, verificar AC/UTA, fechar estores/janelas, desligar luzes, baixar o braço do torniquete no botão preto, confirmar salas UPS e V1.13 trancadas, escrever 'nada a passar' na folha de passagem e entregar a chave na portaria.",
+                        status: "correct",
+                        title: "Fecho Impecável (100% Manual)",
+                        feedback: "Perfeito! Cumpriste todas as regras da pág. 34, incluindo não desligar plotters/laser/torniquete e registar 'nada a passar' na folha de caráter obrigatório."
+                    },
+                    {
+                        text: "Deixar os computadores todos ligados durante a noite e entregar a chave apenas na manhã seguinte.",
+                        status: "error",
+                        title: "Incumprimento do Fecho",
+                        feedback: "Aos 5 minutos do fecho reiniciam-se os PCs (exceto se decorrerem cursos) e a chave tem de ser entregue na portaria assinando o livro com data e hora."
+                    }
+                ]
+            }
+        ];
+
+        // =========================================================================
+        // 4. DADOS DA CHECKLIST DE BOLSO (4 SECÇÕES OFICIAIS: PÁG. 33–36)
+        // =========================================================================
+        const checklistData = [
+            {
+                id: "abertura-op",
+                title: "1. Abertura Operacional",
+                subtitle: "15 min antes · Pág. 33",
+                icon: "sunrise",
+                items: [
+                    { id: "ao-1", text: "Estar na portaria 15 min antes, assinar folha e levantar chave (ou pedir às senhoras da limpeza)" },
+                    { id: "ao-2", text: "Abrir porta da direita, ligar iluminação no quadro elétrico e puxar braço do torniquete para cima" },
+                    { id: "ao-3", text: "Abrir estores e verificar na consola se todas as unidades de ar condicionado funcionam" },
+                    { id: "ao-4", text: "Verificar as 3 salas (arrumadas, PCs ligados) e reportar falhas no grupo da Técnica" },
+                    { id: "ao-5", text: "Verificar impressoras, retirar sobras da guilhotina e cumprir 'To Do List - Abertura'" },
+                    { id: "ao-6", text: "Ler plotagens/trabalhos pendentes na folha 'Passagem de Informação - Caráter Obrigatório'" }
+                ]
+            },
+            {
+                id: "abertura-fin",
+                title: "2. Abertura Financeira, TPA & NIF",
+                subtitle: "Início de turno / vendas · Pág. 23, 35 & Sec. 5.3",
+                icon: "coins",
+                items: [
+                    { id: "af-1", text: "Confirmar no POS se a data apresentada é a de hoje (prova que o fecho da véspera foi feito)" },
+                    { id: "af-2", text: "Recontar dinheiro em caixa, validar quantias e confirmar contagem de caixa no ticket" },
+                    { id: "af-3", text: "Abrir sessão no POS (separador 'Caixa' → utilizador 'Monitor' → 'Abrir sessão' → 'Ok')" },
+                    { id: "af-4", text: "Abrir TPA Multibanco APENAS na 1ª venda (Supervisor → Ativar → Não Utilizar → NIB → Verde → negar talão)" },
+                    { id: "af-5", text: "Fatura c/ NIF: se 'N.º contribuinte não encontrado', criar ficha em Ficheiros > Clientes (+) (CP fallback: 0000-000 Lisboa) antes de fechar" }
+                ]
+            },
+            {
+                id: "fecho-fin",
+                title: "3. Fecho Financeiro",
+                subtitle: "30 min antes do fecho · Pág. 35–36",
+                icon: "calculator",
+                items: [
+                    { id: "ff-1", text: "No GEST ('Novo POS'), confirmar que todas as vendas com NIF e Multibanco estão passadas no POS" },
+                    { id: "ff-2", text: "Emitir Faturas Simplificadas (Aluno LTI e Geral) das vendas a dinheiro, SEM exceder 100€ cada" },
+                    { id: "ff-3", text: "No POS, fazer 'Apuramento de dia' e confirmar que todos os métodos batem certo com o GEST" },
+                    { id: "ff-4", text: "Fechar TPA Multibanco (Botão Branco → Supervisor → Desativar Fecho → imprimir talão; NÃO clicar em TOTAIS)" },
+                    { id: "ff-5", text: "Encerrar dia no POS (clicar na data → 'próximo dia' ou 'acertar manualmente' ao sábado/feriado)" },
+                    { id: "ff-6", text: "Agrafar (1) SCA + Apuramento e (2) 2ª via SCA + talão fecho MB; guardar na pasta preta (separador POS)" }
+                ]
+            },
+            {
+                id: "fecho-op",
+                title: "4. Fecho Operacional",
+                subtitle: "1h, 30m e 5m antes · Pág. 34",
+                icon: "moon",
+                items: [
+                    { id: "fo-1", text: "1h antes: avisar utilizadores da hora de fecho e que a venda de serviços termina 30 min antes" },
+                    { id: "fo-2", text: "Arrumar as 3 salas (cadeiras, lixo/perdidos, desligar projetores e luzes de salas vazias, baixar estores)" },
+                    { id: "fo-3", text: "5 min antes: reiniciar remotamente PCs das salas (exceto com cursos) e de gestão; enviar lista à Técnica" },
+                    { id: "fo-4", text: "Verificar AC/UTA, fechar janelas, desligar luzes e baixar braço do torniquete no botão preto (NÃO desligar plotters/laser/torniquete)" },
+                    { id: "fo-5", text: "Confirmar salas da UPS e V1.13 fechadas e preencher 'Passagem de Informação' (ou escrever 'nada a passar')" },
+                    { id: "fo-6", text: "Entregar a chave na portaria, assinando o livro de registo com data e hora" }
+                ]
+            }
+        ];
+
+        // =========================================================================
+        // 5. DADOS DE EXCEÇÕES E ARMADILHAS (9 CARTÕES CRÍTICOS)
+        // =========================================================================
+        const trapsData = [
+            {
+                id: 1,
+                badge: "Armadilha Terminal MB",
+                badgeStyle: "bg-rose-100 text-rose-800 border-rose-200",
+                icon: "credit-card",
+                title: "A Tecla '.' e o Botão 'TOTAIS' no TPA",
+                trap: "Digitar '4.50' usando o ponto decimal ou clicar em 'TOTAIS' ao fechar o terminal Multibanco.",
+                rule: "No TPA Move/2500 a tecla '.' não faz nada: digita-se sempre até à centésima ('450'). No fecho do dia (Supervisor → Desativar Fecho), nunca clicar em TOTAIS."
+            },
+            {
+                id: 2,
+                badge: "Limite Legal POS",
+                badgeStyle: "bg-amber-100 text-amber-800 border-amber-200",
+                icon: "receipt",
+                title: "Teto de 100€ nas Faturas Simplificadas",
+                trap: "Passar uma única Fatura Simplificada de 130€ no fecho financeiro com o resumo das vendas a dinheiro.",
+                rule: "As Faturas Simplificadas (Aluno LTI e Geral) no fecho NUNCA podem exceder 100€. Se o valor for superior, divide-se e emite-se outra fatura com o restante."
+            },
+            {
+                id: 3,
+                badge: "Hardware do Balcão",
+                badgeStyle: "bg-sky-100 text-[#003B73] border-sky-200",
+                icon: "monitor-off",
+                title: "LTI-ATEND vs. LTI-PLOT",
+                trap: "Trabalhar só no LTI-PLOT com o LTI-ATEND desligado e achar que a caixa está avariada.",
+                rule: "A gaveta de dinheiro e as impressoras de talões estão ligadas ao LTI-ATEND (PC da esquerda). Basta iniciar sessão no LTI-ATEND para a caixa abrir e imprimir."
+            },
+            {
+                id: 4,
+                badge: "Encerramento",
+                badgeStyle: "bg-rose-100 text-rose-800 border-rose-200",
+                icon: "power-off",
+                title: "Equipamentos que NÃO se Desligam",
+                trap: "Desligar as plotters, a impressora laser ou o interruptor do torniquete no fecho do LTI.",
+                rule: "NUNCA desligar as plotters, a impressora laser nem o torniquete! Para fechar o torniquete, carrega-se apenas no botão preto do controlador para baixar o braço."
+            },
+            {
+                id: 5,
+                badge: "Impressão & Consumíveis",
+                badgeStyle: "bg-amber-100 text-amber-800 border-amber-200",
+                icon: "file-warning",
+                title: "Folhas em Branco & Papel Externo",
+                trap: "Não cobrar folhas saídas em branco por erro do aluno ou reaproveitá-las na gaveta da impressora.",
+                rule: "Folhas em branco por culpa do aluno pagam-se a P&B cat. 1 (gastam kit fusor/transferência) e vão para rascunho/reciclagem. Nunca imprimir em papel exterior ou já impresso."
+            },
+            {
+                id: 6,
+                badge: "Código PEP",
+                badgeStyle: "bg-sky-100 text-[#003B73] border-sky-200",
+                icon: "hash",
+                title: "PEP 10 (RI) vs. PEP 18 (IST-ID)",
+                trap: "Aceitar uma folha de requisição com PEP '1801P...' como se fosse uma RI imediata sem IVA.",
+                rule: "10 = RI (imediata, sem IVA, 2 talões, sem ticket). 18 = IST-ID (exige n.º processo RD/XXXXXX antes de imprimir, com IVA, orçamento no carrinho IST-ID, 1 talão, ticket obrigatório)."
+            },
+            {
+                id: 7,
+                badge: "Sala V1.20.2",
+                badgeStyle: "bg-indigo-100 text-indigo-800 border-indigo-200",
+                icon: "timer",
+                title: "Regra dos 15 Minutos & Água",
+                trap: "Deixar alunos guardar lugar com mochilas durante horas ou ter garrafas de água em cima das mesas.",
+                rule: "Abandono máximo do posto é 15 min (depois o monitor pode retirar os pertences). Água é a única bebida permitida, mas as garrafas NUNCA podem estar sobre as mesas."
+            },
+            {
+                id: 8,
+                badge: "Encadernações",
+                badgeStyle: "bg-amber-100 text-amber-800 border-amber-200",
+                icon: "book-open",
+                title: "Trabalhos Impressos Fora do LTI",
+                trap: "Assumir reimpressão gratuita se a furadora estragar um trabalho trazido de fora pelo aluno.",
+                rule: "O LTI só assume reimpressões de trabalhos impressos no LTI. Para trabalhos externos, recomendar baguete plástica (montada pelo cliente) e avisar da isenção de responsabilidade."
+            },
+            {
+                id: 9,
+                badge: "Gestão & Legal",
+                badgeStyle: "bg-rose-100 text-rose-800 border-rose-200",
+                icon: "message-square-x",
+                title: "Livro de Reclamações & Perdidos",
+                trap: "Procurar um Livro de Reclamações físico ou guardar objetos perdidos indefinidamente.",
+                rule: "O LTI não tem Livro de Reclamações (reclamações seguem por e-mail para o Prof. Fernando Simões). Perdidos e achados guardam-se 1 mês (depois pens ficam para o LTI)."
+            },
+            {
+                id: 10,
+                badge: "Contabilidade & POS (Sec. 5.3)",
+                badgeStyle: "bg-rose-100 text-rose-800 border-rose-200",
+                icon: "user-plus",
+                title: "Emitir Fatura com NIF sem Criar Ficha",
+                trap: "Introduzir o NIF apenas no ecrã final da venda quando surge 'N.º contribuinte não encontrado' sem registar o cliente na base de dados.",
+                rule: "Proibido pela Direção de Contabilidade! É obrigatório ir a Ficheiros > Clientes → Lupa → '+' (Nova entidade), guardar em OK e só depois emitir a fatura."
+            },
+            {
+                id: 11,
+                badge: "Dados Fiscais POS (Sec. 5.3)",
+                badgeStyle: "bg-amber-100 text-amber-800 border-amber-200",
+                icon: "map-pin",
+                title: "Cliente Não Sabe o Código Postal",
+                trap: "Deixar o código postal e a localidade em branco na janela 'Nova entidade' ou inventar um código postal qualquer.",
+                rule: "Código postal e localidade são obrigatórios (Telefone e Email são facultativos). Se o cliente não os souber, usar obrigatoriamente '0000-000' e 'Lisboa'."
+            }
+        ];
+
+        // =========================================================================
+        // ESTADO GLOBAL DA APLICAÇÃO E PERSISTÊNCIA
+        // =========================================================================
+        const STORAGE_KEY = 'lti_decivil_study_progress_v1';
+
+        let currentMode = 'flashcards';
+        let selectedCategory = 'Todas';
+        let currentCardIndex = 0;
+        let isFlipped = false;
+        let cardProgress = {};
+
+        let activeQuizList = [...allQuizQuestions];
+        let currentQuestionIndex = 0;
+        let quizScore = 0;
+        let quizBestScore = null;
+        let quizCompletedCount = 0;
+        let hasAnsweredCurrent = false;
+        let missedQuestions = [];
+
+        let simulatorAnswers = {};
+        let checklistState = {};
+        let lastSavedAt = null;
+
+        // =========================================================================
+        // PERSISTÊNCIA LOCAL (localStorage + EXPORTAR/IMPORTAR JSON + TOASTS)
+        // =========================================================================
+        function buildStatePayload() {
+            return {
+                version: 1,
+                cardProgress,
+                selectedCategory,
+                currentCardIndex,
+                quizBestScore,
+                quizCompletedCount,
+                simulatorAnswers,
+                checklistState,
+                currentMode,
+                lastSavedAt
+            };
+        }
+
+        function saveProgress() {
+            lastSavedAt = new Date().toISOString();
+            const payload = buildStatePayload();
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+            } catch (err) {
+                console.warn('Não foi possível gravar no localStorage:', err);
+            }
+            updateSaveStatusUI();
+        }
+
+        function loadProgress() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) {
+                    updateSaveStatusUI();
+                    return;
+                }
+                const data = JSON.parse(raw);
+                applyImportedState(data);
+            } catch (err) {
+                console.warn('Erro ao ler progresso do localStorage:', err);
+            }
+            updateSaveStatusUI();
+        }
+
+        function applyImportedState(data) {
+            if (!data || typeof data !== 'object') return false;
+
+            const validModes = ['flashcards', 'quiz', 'simulator', 'checklist', 'ri-faturacao', 'traps'];
+            const validCategories = ['Todas', ...new Set(flashcardsData.map(c => c.category))];
+
+            if (data.cardProgress && typeof data.cardProgress === 'object') {
+                cardProgress = data.cardProgress;
+            }
+            if (typeof data.selectedCategory === 'string' && validCategories.includes(data.selectedCategory)) {
+                selectedCategory = data.selectedCategory;
+            } else {
+                selectedCategory = 'Todas';
+            }
+            if (typeof data.currentCardIndex === 'number' && data.currentCardIndex >= 0) {
+                currentCardIndex = data.currentCardIndex;
+            }
+            if (typeof data.quizBestScore === 'number' || data.quizBestScore === null) {
+                quizBestScore = data.quizBestScore;
+            }
+            if (typeof data.quizCompletedCount === 'number' && data.quizCompletedCount >= 0) {
+                quizCompletedCount = data.quizCompletedCount;
+            }
+            if (data.simulatorAnswers && typeof data.simulatorAnswers === 'object') {
+                simulatorAnswers = data.simulatorAnswers;
+            }
+            if (data.checklistState && typeof data.checklistState === 'object') {
+                checklistState = data.checklistState;
+            }
+            if (typeof data.currentMode === 'string' && validModes.includes(data.currentMode)) {
+                currentMode = data.currentMode;
+            }
+            if (typeof data.lastSavedAt === 'string') {
+                lastSavedAt = data.lastSavedAt;
+            }
+            return true;
+        }
+
+        function updateSaveStatusUI() {
+            const textEl = document.getElementById('save-status-text');
+            if (!textEl) return;
+
+            if (lastSavedAt) {
+                const dt = new Date(lastSavedAt);
+                if (!isNaN(dt.getTime())) {
+                    const hh = String(dt.getHours()).padStart(2, '0');
+                    const mm = String(dt.getMinutes()).padStart(2, '0');
+                    textEl.textContent = `Guardado às ${hh}:${mm}`;
+                    return;
+                }
+            }
+            textEl.textContent = 'Guardado';
+        }
+
+        function updateQuizBestUI() {
+            const badge = document.getElementById('quiz-best-badge');
+            const valEl = document.getElementById('quiz-best-score-val');
+            if (!badge || !valEl) return;
+
+            if (quizBestScore !== null && quizCompletedCount > 0) {
+                valEl.textContent = quizBestScore;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function exportProgress() {
+            try {
+                lastSavedAt = lastSavedAt || new Date().toISOString();
+                const payload = buildStatePayload();
+                const jsonStr = JSON.stringify(payload, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                const filename = `progresso_lti_decivil_${yyyy}-${mm}-${dd}.json`;
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showToast('Progresso exportado!', 'success');
+            } catch (err) {
+                showToast('Não foi possível exportar o ficheiro.', 'error');
+            }
+        }
+
+        function triggerImport() {
+            const input = document.getElementById('import-file-input');
+            if (input) {
+                input.value = '';
+                input.click();
+            }
+        }
+
+        function importProgress(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    const hasValidStructure = parsed && typeof parsed === 'object' && (
+                        'cardProgress' in parsed ||
+                        'simulatorAnswers' in parsed ||
+                        'checklistState' in parsed ||
+                        'quizBestScore' in parsed ||
+                        'currentMode' in parsed
+                    );
+
+                    if (!hasValidStructure) {
+                        throw new Error('Estrutura de progresso inválida');
+                    }
+
+                    // Reinicia o estado atual antes de aplicar o importado
+                    cardProgress = {};
+                    simulatorAnswers = {};
+                    checklistState = {};
+                    quizBestScore = null;
+                    quizCompletedCount = 0;
+                    isFlipped = false;
+
+                    applyImportedState(parsed);
+                    saveProgress();
+
+                    renderCategoryFilters();
+                    updateFlashcardUI();
+                    updateQuizBestUI();
+                    renderSimulator();
+                    renderChecklists();
+                    switchMode(currentMode, false);
+
+                    showToast('Progresso importado com sucesso!', 'success');
+                } catch (err) {
+                    showToast('Ficheiro inválido. Escolhe um .json exportado desta app.', 'error');
+                }
+            };
+            reader.onerror = () => {
+                showToast('Erro ao ler o ficheiro selecionado.', 'error');
+            };
+            reader.readAsText(file);
+        }
+
+        function openResetModal() {
+            const modal = document.getElementById('reset-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                lucide.createIcons();
+            }
+        }
+
+        function closeResetModal() {
+            const modal = document.getElementById('reset-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function handleResetModalBackdrop(event) {
+            if (event.target && event.target.id === 'reset-modal') {
+                closeResetModal();
+            }
+        }
+
+        function confirmResetProgress() {
+            cardProgress = {};
+            selectedCategory = 'Todas';
+            currentCardIndex = 0;
+            isFlipped = false;
+            quizBestScore = null;
+            quizCompletedCount = 0;
+            simulatorAnswers = {};
+            checklistState = {};
+            lastSavedAt = null;
+
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+            } catch (err) {
+                console.warn('Erro ao limpar localStorage:', err);
+            }
+
+            renderCategoryFilters();
+            updateFlashcardUI();
+            restartQuiz(false);
+            updateQuizBestUI();
+            renderSimulator();
+            renderChecklists();
+            updateSaveStatusUI();
+            closeResetModal();
+
+            showToast('Todo o progresso foi limpo.', 'info');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const styles = {
+                success: { bg: 'bg-[#003B73] text-white border-[#009DE0]/50', icon: 'check-circle-2', iconColor: 'text-emerald-400' },
+                error: { bg: 'bg-rose-700 text-white border-rose-400/50', icon: 'alert-circle', iconColor: 'text-rose-200' },
+                info: { bg: 'bg-slate-800 text-white border-slate-600', icon: 'info', iconColor: 'text-sky-300' }
+            };
+            const st = styles[type] || styles.success;
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl border shadow-xl text-xs sm:text-sm font-medium transition-all duration-300 opacity-0 translate-y-2 ${st.bg}`;
+            toast.innerHTML = `
+                <i data-lucide="${st.icon}" class="w-4 h-4 shrink-0 ${st.iconColor}"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        // =========================================================================
+        // INICIALIZAÇÃO
+        // =========================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+            renderCategoryFilters();
+            updateFlashcardUI();
+            loadQuizQuestion();
+            updateQuizBestUI();
+            renderSimulator();
+            renderChecklists();
+            renderTraps();
+            switchMode(currentMode, false);
+            lucide.createIcons();
+        });
+
+        function switchMode(mode, shouldSave = true) {
+            currentMode = mode;
+            const modes = ['flashcards', 'quiz', 'simulator', 'checklist', 'ri-faturacao', 'traps'];
+
+            modes.forEach(m => {
+                const tab = document.getElementById(`tab-${m}`);
+                const view = document.getElementById(`view-${m}`);
+                if (!tab || !view) return;
+                const isActive = m === mode;
+
+                if (isActive) {
+                    tab.className = "flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-[#009DE0] text-white shadow-sm whitespace-nowrap shrink-0";
+                    tab.setAttribute('aria-selected', 'true');
+                    view.classList.remove('hidden');
+                    view.classList.add('flex');
+                } else {
+                    tab.className = "flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-sky-100/80 hover:text-white whitespace-nowrap shrink-0";
+                    tab.setAttribute('aria-selected', 'false');
+                    view.classList.add('hidden');
+                    view.classList.remove('flex');
+                }
+            });
+
+            if (shouldSave) {
+                saveProgress();
+            }
+            lucide.createIcons();
+        }
+
+        // =========================================================================
+        // LÓGICA DOS FLASHCARDS
+        // =========================================================================
+        function getFilteredCards() {
+            if (selectedCategory === 'Todas') return flashcardsData;
+            return flashcardsData.filter(c => c.category === selectedCategory);
+        }
+
+        function renderCategoryFilters() {
+            // Gera automaticamente as categorias únicas a partir dos próprios flashcards para evitar qualquer discrepância
+            const uniqueCategories = [...new Set(flashcardsData.map(c => c.category))];
+            const categories = ['Todas', ...uniqueCategories];
+            const container = document.getElementById('category-filters');
+            container.innerHTML = '';
+
+            categories.forEach(cat => {
+                const isSelected = cat === selectedCategory;
+                const btn = document.createElement('button');
+                btn.textContent = cat;
+                btn.onclick = () => {
+                    selectedCategory = cat;
+                    currentCardIndex = 0;
+                    isFlipped = false;
+                    renderCategoryFilters();
+                    updateFlashcardUI();
+                    saveProgress();
+                };
+                btn.className = isSelected
+                    ? "px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#003B73] text-white whitespace-nowrap transition shadow-sm"
+                    : "px-3.5 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap transition";
+                container.appendChild(btn);
+            });
+        }
+
+        function updateFlashcardUI() {
+            const cards = getFilteredCards();
+            if (!cards || cards.length === 0) return;
+
+            if (currentCardIndex >= cards.length) {
+                currentCardIndex = 0;
+            }
+
+            const card = cards[currentCardIndex];
+            const inner = document.getElementById('flashcard-inner');
+
+            inner.classList.toggle('rotate-y-180', isFlipped);
+
+            document.getElementById('card-counter').textContent = `Cartão ${currentCardIndex + 1} de ${cards.length}`;
+            document.getElementById('card-category-front').textContent = card.category;
+            document.getElementById('card-category-back').textContent = card.category;
+            document.getElementById('card-front-text').textContent = card.front;
+            document.getElementById('card-back-text').textContent = card.back;
+
+            const status = cardProgress[card.id];
+            const statusBadge = document.getElementById('card-status-badge');
+            if (status === 'mastered') {
+                statusBadge.textContent = '✓ Já sei';
+                statusBadge.className = 'px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold';
+            } else if (status === 'review') {
+                statusBadge.textContent = '↻ Rever depois';
+                statusBadge.className = 'px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold';
+            } else {
+                statusBadge.textContent = 'Não avaliado';
+                statusBadge.className = 'px-2.5 py-0.5 rounded-full bg-slate-200/70 text-slate-600';
+            }
+
+            const total = flashcardsData.length;
+            const masteredCount = Object.values(cardProgress).filter(v => v === 'mastered').length;
+            const reviewCount = Object.values(cardProgress).filter(v => v === 'review').length;
+
+            document.getElementById('stat-mastered').textContent = masteredCount;
+            document.getElementById('stat-review').textContent = reviewCount;
+            document.getElementById('stat-total').textContent = total;
+
+            document.getElementById('bar-mastered').style.width = `${(masteredCount / total) * 100}%`;
+            document.getElementById('bar-review').style.width = `${(reviewCount / total) * 100}%`;
+        }
+
+        function flipCard() {
+            isFlipped = !isFlipped;
+            document.getElementById('flashcard-inner').classList.toggle('rotate-y-180', isFlipped);
+        }
+
+        function nextCard() {
+            const cards = getFilteredCards();
+            isFlipped = false;
+            currentCardIndex = (currentCardIndex + 1) % cards.length;
+            updateFlashcardUI();
+            saveProgress();
+        }
+
+        function prevCard() {
+            const cards = getFilteredCards();
+            isFlipped = false;
+            currentCardIndex = (currentCardIndex - 1 + cards.length) % cards.length;
+            updateFlashcardUI();
+            saveProgress();
+        }
+
+        function markCard(status) {
+            const cards = getFilteredCards();
+            const currentCard = cards[currentCardIndex];
+            cardProgress[currentCard.id] = status;
+            updateFlashcardUI();
+            saveProgress();
+            setTimeout(() => nextCard(), 280);
+        }
+
+        // =========================================================================
+        // LÓGICA DO QUESTIONÁRIO
+        // =========================================================================
+        function loadQuizQuestion() {
+            hasAnsweredCurrent = false;
+            const q = activeQuizList[currentQuestionIndex];
+            const total = activeQuizList.length;
+
+            document.getElementById('quiz-progress-text').textContent = `Pergunta ${currentQuestionIndex + 1} de ${total}`;
+            document.getElementById('quiz-score-badge').textContent = quizScore;
+            document.getElementById('quiz-progress-bar').style.width = `${((currentQuestionIndex + 1) / total) * 100}%`;
+
+            document.getElementById('quiz-category').textContent = q.category;
+            document.getElementById('quiz-question-text').textContent = q.question;
+
+            document.getElementById('quiz-feedback-box').classList.add('hidden');
+            const nextBtn = document.getElementById('quiz-next-btn');
+            nextBtn.disabled = true;
+            document.getElementById('quiz-next-btn-text').textContent =
+                currentQuestionIndex === total - 1 ? 'Ver Resultados Finais' : 'Próxima Pergunta';
+
+            const optionsContainer = document.getElementById('quiz-options-list');
+            optionsContainer.innerHTML = '';
+            const letters = ['A', 'B', 'C', 'D'];
+
+            q.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.id = `quiz-opt-${idx}`;
+                btn.onclick = () => selectQuizOption(idx);
+                btn.className = "w-full text-left p-4 rounded-2xl border-2 border-slate-200 hover:border-[#009DE0] hover:bg-sky-50/40 transition flex items-start gap-3.5 group";
+
+                btn.innerHTML = `
+                    <span class="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-sky-100 text-slate-700 group-hover:text-[#003B73] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 transition">
+                        ${letters[idx]}
+                    </span>
+                    <span class="text-sm sm:text-base text-slate-700 font-medium leading-snug">${optText}</span>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectQuizOption(selectedIdx) {
+            if (hasAnsweredCurrent) return;
+            hasAnsweredCurrent = true;
+
+            const q = activeQuizList[currentQuestionIndex];
+            const isCorrect = selectedIdx === q.correctIndex;
+
+            if (isCorrect) {
+                quizScore++;
+                document.getElementById('quiz-score-badge').textContent = quizScore;
+            } else {
+                missedQuestions.push(q);
+            }
+
+            q.options.forEach((_, idx) => {
+                const btn = document.getElementById(`quiz-opt-${idx}`);
+                btn.disabled = true;
+                btn.classList.remove('hover:border-[#009DE0]', 'hover:bg-sky-50/40');
+                const badge = btn.querySelector('span:first-child');
+
+                if (idx === q.correctIndex) {
+                    btn.className = "w-full text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 flex items-start gap-3.5";
+                    badge.className = "w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5";
+                } else if (idx === selectedIdx && !isCorrect) {
+                    btn.className = "w-full text-left p-4 rounded-2xl border-2 border-rose-500 bg-rose-50/70 flex items-start gap-3.5";
+                    badge.className = "w-7 h-7 rounded-lg bg-rose-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5";
+                } else {
+                    btn.className = "w-full text-left p-4 rounded-2xl border-2 border-slate-100 opacity-50 flex items-start gap-3.5";
+                }
+            });
+
+            const feedbackBox = document.getElementById('quiz-feedback-box');
+            const feedbackTitle = document.getElementById('quiz-feedback-title');
+            const feedbackExp = document.getElementById('quiz-feedback-explanation');
+
+            feedbackBox.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'bg-rose-50', 'border-rose-200');
+            if (isCorrect) {
+                feedbackBox.classList.add('bg-emerald-50', 'border-emerald-200');
+                feedbackTitle.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i> <span class="text-emerald-800">Resposta Correta!</span>`;
+            } else {
+                feedbackBox.classList.add('bg-rose-50', 'border-rose-200');
+                feedbackTitle.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4 text-rose-600"></i> <span class="text-rose-800">Resposta Incorreta</span>`;
+            }
+            feedbackExp.textContent = q.explanation;
+            lucide.createIcons();
+
+            document.getElementById('quiz-next-btn').disabled = false;
+        }
+
+        function nextQuizQuestion() {
+            if (currentQuestionIndex < activeQuizList.length - 1) {
+                currentQuestionIndex++;
+                loadQuizQuestion();
+            } else {
+                showQuizResults();
+            }
+        }
+
+        function showQuizResults() {
+            document.getElementById('quiz-active-container').classList.add('hidden');
+            const resultsContainer = document.getElementById('quiz-results-container');
+            resultsContainer.classList.remove('hidden');
+            resultsContainer.classList.add('flex');
+
+            const total = activeQuizList.length;
+            const pct = Math.round((quizScore / total) * 100);
+
+            quizCompletedCount++;
+            if (total === allQuizQuestions.length) {
+                quizBestScore = quizBestScore === null ? quizScore : Math.max(quizBestScore, quizScore);
+            }
+            saveProgress();
+            updateQuizBestUI();
+
+            document.getElementById('final-score').textContent = quizScore;
+            document.getElementById('final-total').textContent = total;
+            document.getElementById('final-percentage').textContent = `${pct}%`;
+
+            const missedSection = document.getElementById('missed-questions-section');
+            const missedList = document.getElementById('missed-questions-list');
+            const retryMissedBtn = document.getElementById('btn-retry-missed');
+
+            if (missedQuestions.length > 0) {
+                missedSection.classList.remove('hidden');
+                missedSection.classList.add('flex');
+                retryMissedBtn.classList.remove('hidden');
+                retryMissedBtn.classList.add('flex');
+
+                missedList.innerHTML = missedQuestions.map(mq => `
+                    <div class="p-4 rounded-2xl bg-rose-50/60 border border-rose-200 text-sm">
+                        <p class="font-bold text-slate-900 mb-1">${mq.question}</p>
+                        <p class="text-emerald-700 font-semibold text-xs mb-1">✓ Resposta correta: ${mq.options[mq.correctIndex]}</p>
+                        <p class="text-slate-600 text-xs">${mq.explanation}</p>
+                    </div>
+                `).join('');
+            } else {
+                missedSection.classList.add('hidden');
+                missedSection.classList.remove('flex');
+                retryMissedBtn.classList.add('hidden');
+                retryMissedBtn.classList.remove('flex');
+            }
+
+            lucide.createIcons();
+        }
+
+        function restartQuiz(onlyMissed) {
+            if (onlyMissed && missedQuestions.length > 0) {
+                activeQuizList = [...missedQuestions];
+            } else {
+                activeQuizList = [...allQuizQuestions];
+            }
+            currentQuestionIndex = 0;
+            quizScore = 0;
+            missedQuestions = [];
+
+            document.getElementById('quiz-results-container').classList.add('hidden');
+            document.getElementById('quiz-results-container').classList.remove('flex');
+            document.getElementById('quiz-active-container').classList.remove('hidden');
+
+            loadQuizQuestion();
+        }
+
+        // =========================================================================
+        // LÓGICA DO SIMULADOR DE TURNO
+        // =========================================================================
+        function renderSimulator() {
+            const container = document.getElementById('simulator-scenarios-list');
+            container.innerHTML = '';
+
+            simulatorScenarios.forEach((sc, sIdx) => {
+                const chosenIdx = simulatorAnswers[sc.id];
+                const hasAnswered = chosenIdx !== undefined;
+
+                const card = document.createElement('div');
+                card.className = "bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm flex flex-col gap-4";
+
+                let optionsHtml = sc.options.map((opt, oIdx) => {
+                    let btnClass = "w-full text-left p-4 rounded-2xl border-2 border-slate-200 hover:border-[#009DE0] hover:bg-sky-50/40 transition flex items-start gap-3";
+                    let badgeClass = "w-6 h-6 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5";
+
+                    if (hasAnswered) {
+                        if (oIdx === chosenIdx) {
+                            if (opt.status === 'correct') {
+                                btnClass = "w-full text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 flex items-start gap-3";
+                                badgeClass = "w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5";
+                            } else if (opt.status === 'warning') {
+                                btnClass = "w-full text-left p-4 rounded-2xl border-2 border-amber-500 bg-amber-50/70 flex items-start gap-3";
+                                badgeClass = "w-6 h-6 rounded-full bg-amber-500 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5";
+                            } else {
+                                btnClass = "w-full text-left p-4 rounded-2xl border-2 border-rose-500 bg-rose-50/70 flex items-start gap-3";
+                                badgeClass = "w-6 h-6 rounded-full bg-rose-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5";
+                            }
+                        } else if (opt.status === 'correct') {
+                            btnClass = "w-full text-left p-4 rounded-2xl border-2 border-emerald-300 bg-emerald-50/30 flex items-start gap-3";
+                            badgeClass = "w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5";
+                        } else {
+                            btnClass = "w-full text-left p-4 rounded-2xl border-2 border-slate-100 opacity-50 flex items-start gap-3";
+                        }
+                    }
+
+                    return `
+                        <button onclick="selectSimulatorOption(${sc.id}, ${oIdx})" ${hasAnswered ? 'disabled' : ''} class="${btnClass}">
+                            <span class="${badgeClass}">${oIdx + 1}</span>
+                            <span class="text-sm text-slate-800 font-medium leading-snug">${opt.text}</span>
+                        </button>
+                    `;
+                }).join('');
+
+                let feedbackHtml = '';
+                if (hasAnswered) {
+                    const selectedOpt = sc.options[chosenIdx];
+                    const styleMap = {
+                        correct: { box: 'bg-emerald-50 border-emerald-200 text-emerald-900', icon: 'check-circle-2', iconColor: 'text-emerald-600' },
+                        warning: { box: 'bg-amber-50 border-amber-200 text-amber-900', icon: 'alert-triangle', iconColor: 'text-amber-600' },
+                        error: { box: 'bg-rose-50 border-rose-200 text-rose-900', icon: 'x-circle', iconColor: 'text-rose-600' }
+                    };
+                    const st = styleMap[selectedOpt.status];
+
+                    feedbackHtml = `
+                        <div class="rounded-2xl p-4 border ${st.box} text-sm flex flex-col gap-1.5">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold flex items-center gap-2">
+                                    <i data-lucide="${st.icon}" class="w-4 h-4 ${st.iconColor}"></i>
+                                    ${selectedOpt.title}
+                                </span>
+                                <button onclick="resetSimulatorScenario(${sc.id})" class="text-xs underline opacity-75 hover:opacity-100 font-semibold">
+                                    Tentar novamente
+                                </button>
+                            </div>
+                            <p class="leading-relaxed opacity-95">${selectedOpt.feedback}</p>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 rounded-lg bg-[#003B73] text-white text-xs font-bold">Caso #${sIdx + 1}</span>
+                            <span class="text-xs font-semibold text-slate-500">Interlocutor: <strong class="text-slate-800">${sc.role}</strong></span>
+                        </div>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-50 text-[#003B73] border border-sky-200">
+                            ${sc.badge}
+                        </span>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-sm sm:text-base text-slate-800 italic leading-relaxed">
+                        "${sc.situation}"
+                    </div>
+
+                    <div class="flex flex-col gap-2.5">
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Como procedes ao balcão?</p>
+                        ${optionsHtml}
+                    </div>
+
+                    ${feedbackHtml}
+                `;
+
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function selectSimulatorOption(scenarioId, optionIndex) {
+            simulatorAnswers[scenarioId] = optionIndex;
+            renderSimulator();
+            saveProgress();
+        }
+
+        function resetSimulatorScenario(scenarioId) {
+            delete simulatorAnswers[scenarioId];
+            renderSimulator();
+            saveProgress();
+        }
+
+        // =========================================================================
+        // LÓGICA DA CHECKLIST DE BOLSO
+        // =========================================================================
+        function renderChecklists() {
+            const container = document.getElementById('checklist-sections-container');
+            container.innerHTML = '';
+
+            let totalItems = 0;
+            let completedItems = 0;
+
+            checklistData.forEach(sec => {
+                const secTotal = sec.items.length;
+                const secDone = sec.items.filter(item => checklistState[item.id]).length;
+                totalItems += secTotal;
+                completedItems += secDone;
+                const secPct = Math.round((secDone / secTotal) * 100);
+
+                const col = document.createElement('div');
+                col.className = "bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm flex flex-col gap-4";
+
+                const itemsHtml = sec.items.map(item => {
+                    const checked = !!checklistState[item.id];
+                    return `
+                        <label onclick="toggleChecklistItem('${item.id}')" class="flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition select-none ${checked ? 'bg-emerald-50/60 border-emerald-200 text-slate-400 line-through' : 'bg-slate-50/70 border-slate-200/80 hover:border-[#009DE0] text-slate-700'}">
+                            <div class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition ${checked ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-300'}">
+                                ${checked ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : ''}
+                            </div>
+                            <span class="text-xs sm:text-sm font-medium leading-snug">${item.text}</span>
+                        </label>
+                    `;
+                }).join('');
+
+                col.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-xl bg-sky-50 text-[#003B73] border border-sky-200 flex items-center justify-center shrink-0">
+                                <i data-lucide="${sec.icon}" class="w-5 h-5 text-[#009DE0]"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-[#003B73] text-base">${sec.title}</h3>
+                                <p class="text-xs text-slate-400">${sec.subtitle}</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-full ${secDone === secTotal ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
+                            ${secDone}/${secTotal}
+                        </span>
+                    </div>
+
+                    <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="bg-[#009DE0] h-full transition-all duration-300" style="width: ${secPct}%"></div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        ${itemsHtml}
+                    </div>
+                `;
+
+                container.appendChild(col);
+            });
+
+            document.getElementById('checklist-global-counter').textContent = `${completedItems} / ${totalItems}`;
+            lucide.createIcons();
+        }
+
+        function toggleChecklistItem(itemId) {
+            checklistState[itemId] = !checklistState[itemId];
+            renderChecklists();
+            saveProgress();
+        }
+
+        function resetChecklists() {
+            checklistState = {};
+            renderChecklists();
+            saveProgress();
+        }
+
+        // =========================================================================
+        // LÓGICA DE EXCEÇÕES E ARMADILHAS
+        // =========================================================================
+        function renderTraps() {
+            const container = document.getElementById('traps-grid');
+            container.innerHTML = '';
+
+            trapsData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm flex flex-col gap-3.5";
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full border ${item.badgeStyle}">
+                            ${item.badge}
+                        </span>
+                        <div class="w-8 h-8 rounded-xl bg-slate-100 text-[#003B73] flex items-center justify-center">
+                            <i data-lucide="${item.icon}" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+
+                    <h3 class="text-base font-bold text-[#003B73]">${item.title}</h3>
+
+                    <div class="p-3 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-xs text-rose-900">
+                        <strong class="uppercase tracking-wider text-[10px] text-rose-600 block mb-0.5">O que NÃO fazer (Armadilha):</strong>
+                        ${item.trap}
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 leading-relaxed mt-auto">
+                        <strong class="uppercase tracking-wider text-[10px] text-[#009DE0] block mb-0.5">Regra Oficial do Manual:</strong>
+                        ${item.rule}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
